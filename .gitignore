@@ -1,0 +1,6 @@
+# Dependencies
+node_modules/
+
+# JetBrains IDE (IntelliJ, WebStorm, etc.)
+.idea/
+

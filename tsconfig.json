@@ -1,0 +1,45 @@
+{
+    "compilerOptions": {
+        /* Language and environment */
+        "target": "ES2020",
+        "module": "CommonJS",
+        "lib": [
+            "ES2020",
+            "dom"
+        ],
+
+        /* Project structure */
+        "rootDir": ".",
+        "outDir": "dist",
+
+        /* Module resolution */
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+
+        /* Strictness (important signal) */
+        "strict": true,
+        "skipLibCheck": true,
+
+        /* DX improvements */
+        "forceConsistentCasingInFileNames": true,
+
+        /* Source maps for debugging */
+        "sourceMap": true,
+
+        /* Allow running with ts-node easily */
+        "types": ["node"],
+      "jsx": "react"
+    },
+
+    "include": [
+        "src/**/*",
+        "ingestion/**/*",
+        "scripts/**/*"
+    ],
+
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

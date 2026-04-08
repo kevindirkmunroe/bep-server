@@ -1,0 +1,22 @@
+{
+  "name": "bep-server",
+  "version": "1.0.0",
+  "description": "Handle requests to create, update and publish events from bep-ui (bayarea-event-publisher)",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/pg": "^8.20.0"
+  }
+}
