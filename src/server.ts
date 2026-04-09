@@ -9,7 +9,7 @@ import {
 
 import {
     createUser,
-    getUser
+    getUser, getUserByEmail
 } from "./controllers/usersController";
 
 import {
@@ -26,6 +26,7 @@ app.use(express.json());
 
 app.post("/users", createUser);
 app.get("/users/:userId", getUser);
+app.get("/users", getUserByEmail);
 
 app.post("/users/:userId/event", createUserEvent);
 app.get("/users/:userId/events", getUserEvents);

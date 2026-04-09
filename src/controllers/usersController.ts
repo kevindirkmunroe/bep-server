@@ -51,3 +51,20 @@ export const getUser = async( req: Request, resp: Response) => {
         data: result.rows,
     });
 }
+
+// GET /users?email=...
+export const getUserByEmail = async (req: Request, resp: Response) => {
+    const { email } = req.query;
+    const client = await pool.connect();
+
+    const result = await client.query(
+        `SELECT * FROM users WHERE email = $1`,
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return resp.status(404).json({ error: "User not found" });
+    }
+
+    resp.json(result.rows[0]);
+};
