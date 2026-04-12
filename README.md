@@ -40,6 +40,8 @@ CREATE TABLE events (
 
   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
 
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
 
@@ -63,7 +65,7 @@ also create index on `events` by `user_id`, will be used heavily in UI:
 CREATE INDEX idx_events_user_id ON events(user_id);
 ```
 
-Create `published_events`:
+Create `published_events`, tracks status of events as they are published on platforms:
 ```
 CREATE TABLE published_events (
   published_event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

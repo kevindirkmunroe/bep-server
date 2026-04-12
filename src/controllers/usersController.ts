@@ -34,22 +34,26 @@ export const getUser = async( req: Request, resp: Response) => {
             users
         WHERE user_id = $1
     `
-    const result = await pool.query(query, [
-        userId
-    ]);
+    try{
+        const result = await pool.query(query, [
+            userId
+        ]);
 
 
-    if (result.rows.length === 0) {
-        return resp.status(404).json({
-            error: `User not found: ${userId}`,
+        if (result.rows.length === 0) {
+            return resp.status(404).json({
+                error: `User not found: ${userId}`,
+            });
+        }
+
+        return resp.json({
+            userId,
+            count: result.rows.length,
+            data: result.rows,
         });
+    }catch(err: Error | any){
+        resp.status(500).json({ error: err.message });
     }
-
-    return resp.json({
-        userId,
-        count: result.rows.length,
-        data: result.rows,
-    });
 }
 
 // GET /users?email=...
@@ -57,14 +61,20 @@ export const getUserByEmail = async (req: Request, resp: Response) => {
     const { email } = req.query;
     const client = await pool.connect();
 
-    const result = await client.query(
-        `SELECT * FROM users WHERE email = $1`,
-        [email]
-    );
+    try {
+        const result = await client.query(
+            `SELECT *
+             FROM users
+             WHERE email = $1`,
+            [email]
+        );
 
-    if (result.rows.length === 0) {
-        return resp.status(404).json({ error: "User not found" });
+        if (result.rows.length === 0) {
+            return resp.status(404).json({error: "User not found"});
+        }
+
+        resp.json(result.rows[0]);
+    }catch(err: Error | any){
+        resp.status(500).json({ error: err.message });
     }
-
-    resp.json(result.rows[0]);
 };
