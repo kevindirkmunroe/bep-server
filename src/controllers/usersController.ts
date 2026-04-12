@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { pool } from "../db";
+import pool from '../db';
 
 export const createUser= async( req: Request, resp: Response) => {
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { pool } from "../db";
+import pool from '../db';
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland"];
 
