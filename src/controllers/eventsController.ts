@@ -46,6 +46,8 @@ export const createUserEvent= async( req: Request, resp: Response) => {
         await client.query('ROLLBACK');
         console.error(err);
         resp.status(500).json({ error: "Failed to create event"});
+    }finally {
+        client.release();   // ✅ ALWAYS release
     }
 }
 
@@ -80,6 +82,8 @@ export const updateUserEvent = async( req: Request, resp: Response) => {
     }catch(err){
         console.error(err);
         resp.status(500).json({ error: "Failed to update event" });
+    }finally {
+        client.release();   // ✅ ALWAYS release
     }
 }
 
@@ -93,6 +97,11 @@ export const deleteUserEvent= async( req: Request, resp: Response) => {
         `,
             [eventId]
         );
+        await client.query(`
+                DELETE FROM published_events where event_id = $1
+        `,
+            [eventId]
+        );
 
         resp.status(204).json({
             message: "Event deleted", data: req.body
@@ -100,6 +109,8 @@ export const deleteUserEvent= async( req: Request, resp: Response) => {
     }catch(err){
         console.error(err);
         resp.status(500).json({ error: "Failed to delete event" });
+    }finally {
+        client.release();   // ✅ ALWAYS release
     }
 }
 
@@ -112,12 +123,35 @@ export const getUserEvents = async( req: Request, resp: Response) => {
     }
 
     const query = `
-        SELECT event_id, title, description, start_datetime, end_datetime,
-           location_name, address, price, image_url, name, email
-        FROM
-            events
-        WHERE user_id = $1
-        ORDER BY created_at DESC
+        SELECT
+            e.event_id,
+            e.title,
+            e.description,
+            e.start_datetime,
+            e.end_datetime,
+            e.location_name,
+            e.address,
+            e.price,
+            e.image_url,
+            e.name,
+            e.email,
+            COALESCE(
+                    json_agg(
+                            json_build_object(
+                                    'platform', p.platform,
+                                    'status', p.status,
+                                    'external_url', p.external_url,
+                                    'date_published', p.date_published
+                                )
+                        ) FILTER (WHERE p.platform IS NOT NULL),
+                    '[]'
+                ) AS platforms
+        FROM events e
+                 LEFT JOIN published_events p
+                           ON e.event_id = p.event_id
+        WHERE e.user_id = $1
+        GROUP BY e.event_id
+        ORDER BY e.created_at DESC
     `
     const result = await pool.query(query, [
         userId

@@ -2,14 +2,12 @@ import { Request, Response } from "express";
 import pool from '../db';
 
 export const updatePublishedEvent = async( req: Request, resp: Response) => {
-    const client = await pool.connect();
-
     const eventId = req.params.eventId;
     const platform = req.params.platform;
 
     const { external_url, status, payload } = req.body;
     try{
-        const result = await client.query(
+        const result = await pool.query(
             `
         UPDATE published_events
             SET
@@ -37,13 +35,11 @@ export const updatePublishedEvent = async( req: Request, resp: Response) => {
 }
 
 export const getPublishedEvent = async( req: Request, resp: Response) => {
-    const client = await pool.connect();
-
     const eventId = req.params.eventId;
     const platform = req.params.platform;
 
     try {
-        const result = await client.query(
+        const result = await pool.query(
             `SELECT *
              from published_events
              WHERE event_id = $1
@@ -73,33 +69,6 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
     const client = await pool.connect();
 
     try {
-      //   const result = await client.query(
-      //       `
-      // SELECT
-      //   e.*,
-      //   json_agg(
-      //     json_build_object(
-      //       'platform', p.platform,
-      //       'status', p.status,
-      //       'external_url', p.external_url,
-      //       'date_published', p.date_published
-      //     )
-      //   ) AS platforms
-      // FROM events e
-      // LEFT JOIN published_events p
-      //   ON e.event_id = p.event_id
-      // WHERE e.event_id = $1
-      // GROUP BY e.event_id
-      // `,
-      //       [eventId]
-      //   );
-      //
-      //   if (result.rows.length === 0) {
-      //       return resp.status(404).json({ error: "Event not found" });
-      //   }
-      //
-      //   resp.json(result.rows[0]);
-
         const eventRes = await client.query(
             `SELECT * FROM events WHERE event_id = $1`,
             [eventId]
@@ -120,5 +89,7 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
     } catch (err) {
         console.error(err);
         resp.status(500).json({ error: "Failed to fetch event platforms" });
+    }finally {
+        client.release();   // ✅ ALWAYS release
     }
 };
