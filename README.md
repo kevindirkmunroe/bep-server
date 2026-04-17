@@ -72,6 +72,8 @@ CREATE TABLE published_events (
 
   event_id UUID NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
 
+  name TEXT NOT NULL,
+  email TEXT,
   platform TEXT NOT NULL,
 
   status TEXT NOT NULL DEFAULT 'not_started',
@@ -83,6 +85,9 @@ CREATE TABLE published_events (
 
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
+  
+  phone TEXT,
+  website TEXT,
 
   UNIQUE (event_id, platform)
 );
