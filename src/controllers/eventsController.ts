@@ -134,7 +134,10 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.price,
             e.image_url,
             e.name,
+            e.website,
             e.email,
+            e.organization, 
+            e.phone,
             COALESCE(
                     json_agg(
                             json_build_object(
