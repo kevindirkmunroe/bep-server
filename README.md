@@ -136,3 +136,16 @@ bayarea_event_publisher=# \di
  public | users_pkey                             | index | kevinmunroe | users
 (8 rows)
 ```
+Next, lets add some user_logins to track 
+- How many users actually log in?
+- DAU / WAU (daily/weekly active users)
+- Who churned?
+- When do people use the app?
+
+```
+CREATE TABLE user_logins (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id),
+  login_timestamp TIMESTAMP DEFAULT NOW()
+);
+```

@@ -9,7 +9,9 @@ import {
 
 import {
     createUser,
-    getUser, getUserByEmail
+    getUser,
+    getUserByEmail, loginUser,
+    validateUser
 } from "./controllers/usersController";
 
 import {
@@ -24,9 +26,12 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/users/validate", validateUser);
+app.post("/users/login", loginUser);
 app.post("/users", createUser);
-app.get("/users/:userId", getUser);
 app.get("/users", getUserByEmail);
+app.get("/users/:userId", getUser);
+
 
 app.post("/users/:userId/event", createUserEvent);
 app.get("/users/:userId/events", getUserEvents);
