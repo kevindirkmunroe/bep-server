@@ -28,10 +28,10 @@ export const createUserEvent= async( req: Request, resp: Response) => {
 
         for (const platform of SUPPORTED_PLATFORMS) {
             await client.query(`
-                        INSERT INTO published_events (event_id, platform, status, name)
-                        VALUES ($1, $2, 'not_started', $3);
+                        INSERT INTO published_events (event_id, platform, status)
+                        VALUES ($1, $2, 'not_started');
                 `,
-                [event_id, platform, name]
+                [event_id, platform]
             );
         }
 
@@ -154,7 +154,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                            ON e.event_id = p.event_id
         WHERE e.user_id = $1
         GROUP BY e.event_id
-        ORDER BY e.created_at DESC
+        ORDER BY e.start_datetime ASC
     `
     const result = await pool.query(query, [
         userId
