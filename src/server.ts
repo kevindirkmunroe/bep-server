@@ -33,7 +33,7 @@ app.get("/users", getUserByEmail);
 app.get("/users/:userId", getUser);
 
 
-app.post("/users/:userId/event", createUserEvent);
+app.post("/users/:userId/events", createUserEvent);
 app.get("/users/:userId/events", getUserEvents);
 app.put("/events/:eventId", updateUserEvent);
 app.delete("/events/:eventId", deleteUserEvent);

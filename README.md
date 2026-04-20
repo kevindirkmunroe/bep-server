@@ -30,7 +30,8 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
 
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  username TEXT UNIQUE
 );
 ```
 Create `events`:
@@ -53,6 +54,8 @@ CREATE TABLE events (
 
   price TEXT,
   image_url TEXT,
+  phone TEXT,
+  website TEXT,
 
   tags TEXT[],
 
@@ -145,7 +148,7 @@ Next, lets add some user_logins to track
 ```
 CREATE TABLE user_logins (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(user_id),
+  user_id uuid REFERENCES users(user_id),
   login_timestamp TIMESTAMP DEFAULT NOW()
 );
 ```

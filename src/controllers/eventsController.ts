@@ -28,10 +28,10 @@ export const createUserEvent= async( req: Request, resp: Response) => {
 
         for (const platform of SUPPORTED_PLATFORMS) {
             await client.query(`
-                        INSERT INTO published_events (event_id, platform, status)
-                        VALUES ($1, $2, 'not_started');
+                        INSERT INTO published_events (event_id, platform, status, name)
+                        VALUES ($1, $2, 'not_started', $3);
                 `,
-                [event_id, platform]
+                [event_id, platform, name]
             );
         }
 
