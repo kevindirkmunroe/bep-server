@@ -1,16 +1,20 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+
 import pool from '../db';
 
 export const createUser= async( req: Request, resp: Response) => {
 
      const { first_name, last_name, company, email, password, username} = req.body;
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
      try{
          const result = await pool.query(`
             INSERT INTO users (first_name, last_name, company, email, password_hash, created_at, username)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING user_id
             `,
-                 [first_name, last_name, company, email, password, new Date(), username]
+                 [first_name, last_name, company, email, hashedPassword, new Date(), username]
              );
          return resp.status(201).json({ user_id: result.rows[0].user_id });
      }catch(err){
@@ -88,10 +92,30 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ error: "Invalid credentials" });
         }
         const user = result.rows[0];
+        const isHashed = user.password_hash.startsWith("$2b$");
 
-        // ⚠️ V1: plain text (you should upgrade to bcrypt soon)
-        if (user.password_hash !== password) {
-            return res.status(401).json({ error: "Invalid credentials" });
+        if (!isHashed) {
+            // plaintext comparison (old users)
+            if (user.password_hash !== password) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
+
+            // ✅ upgrade to hashed
+            const newHash = await bcrypt.hash(password, 10);
+
+            await pool.query(
+                "UPDATE users SET password_hash = $1 WHERE user_id = $2",
+                [newHash, user.user_id]
+            );
+
+            console.log("🔄 Password upgraded to bcrypt");
+        } else {
+            // normal bcrypt flow
+            const isMatch = await bcrypt.compare(password, user.password_hash);
+
+            if (!isMatch) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
         }
 
         // ✅ Login success → track it
