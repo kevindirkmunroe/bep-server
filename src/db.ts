@@ -1,11 +1,11 @@
 import {Pool} from "pg";
+import 'dotenv/config';
+
+// Retrieve the URL from an environment variable for security
+const connectionString = process.env.DATABASE_URL;
 
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: "bayarea_event_publisher",
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    connectionString: connectionString
 });
 
 export default pool;
