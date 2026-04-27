@@ -6,7 +6,7 @@ const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland"];
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;
-    const { title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, name, email} = req.body;
+    const { title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, name, email, zip} = req.body;
     const client = await pool.connect();
 
     // Transaction creates event and published event...
@@ -17,11 +17,11 @@ export const createUserEvent= async( req: Request, resp: Response) => {
     try {
         const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
-                                       image_url, tags, created_at, updated_at, name, email)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                                       image_url, tags, created_at, updated_at, name, email, zip)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                     RETURNING event_id
             `,
-            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, ts, ts, name, email]
+            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, ts, ts, name, email, zip]
         );
 
         const event_id = result.rows[0].event_id;
@@ -138,6 +138,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.email,
             e.organization, 
             e.phone,
+            e.zip,
             COALESCE(
                     json_agg(
                             json_build_object(

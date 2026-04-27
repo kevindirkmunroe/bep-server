@@ -19,6 +19,7 @@ import {
     getPublishedEvents,
     updatePublishedEvent
 } from "./controllers/publishedEventsController";
+import {mapRegion} from "./controllers/mappingController";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,7 +33,6 @@ app.post("/users", createUser);
 app.get("/users", getUserByEmail);
 app.get("/users/:userId", getUser);
 
-
 app.post("/users/:userId/events", createUserEvent);
 app.get("/users/:userId/events", getUserEvents);
 app.put("/events/:eventId", updateUserEvent);
@@ -41,6 +41,8 @@ app.delete("/events/:eventId", deleteUserEvent);
 app.patch("/events/:eventId/platforms/:platform", updatePublishedEvent);
 app.get("/events/:eventId/platforms/:platform", getPublishedEvent);
 app.get("/events/:eventId", getPublishedEvents);
+
+app.get("/mapRegion", mapRegion);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
