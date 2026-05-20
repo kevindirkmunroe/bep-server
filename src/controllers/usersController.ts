@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
 import pool from '../db';
+import {sendInviteEmail} from "../resend";
 
 export const createUser= async( req: Request, resp: Response) => {
 
@@ -31,22 +32,46 @@ export const getUser = async( req: Request, resp: Response) => {
         });
     }
 
-    const query = `
+    const userQuery = `
         SELECT *
         FROM
             users
         WHERE user_id = $1
     `
     try{
-        const result = await pool.query(query, [
+        const result = await pool.query(userQuery, [
             userId
         ]);
-
 
         if (result.rows.length === 0) {
             return resp.status(404).json({
                 error: `User not found: ${userId}`,
             });
+        }
+
+        const user = result.rows[0];
+        if (!user.email_verified){
+            const inviteCodeQuery = `
+                SELECT * FROM invite_codes 
+                WHERE used_by = $1
+            `;
+
+            const inviteCode = await pool.query(inviteCodeQuery, [
+                userId
+            ]);
+
+            if(inviteCode.rows.length > 0) {
+                // send invite email first...
+                // TODO: auto-send codes, manual for now
+                // await sendInviteEmail(user.email, inviteCode.rows[0].code);
+                return resp.status(403).json({
+                    error: `User not Verified: ${userId}.`,
+                });
+            }else{
+                return resp.status(401).json({
+                    error: `User invitation not found: ${userId}.`,
+                });
+            }
         }
 
         return resp.json({
@@ -55,11 +80,11 @@ export const getUser = async( req: Request, resp: Response) => {
             data: result.rows,
         });
     }catch(err: Error | any){
+        console.log(err.message);
         return resp.status(500).json({ error: err.message });
     }
 }
 
-// GET /users?email=...
 export const getUserByEmail = async (req: Request, resp: Response) => {
     const { email } = req.query;
     try {
@@ -130,6 +155,54 @@ export const loginUser = async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Server error" });
     }
 };
+
+export const checkUserInviteCode = async (req: Request, res: Response) => {
+    const { username, inviteCode } = req.query;
+    try {
+        // Find invite code for user. Check it matches request AND is unused.
+        const result = await pool.query(
+            `
+            SELECT c.code, c.used_by, c.used_at, u.user_id
+            FROM users u, invite_codes c
+            WHERE c.used_by = u.user_id
+            AND c.used_at is NULL
+            AND u.username = $1
+            AND c.code = $2
+            `,
+            [username, inviteCode]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: "Invalid Invite Code" });
+        }
+
+        const userId = result.rows[0].user_id;
+
+        // update user verified...
+        await pool.query(
+            `
+            UPDATE users SET email_verified = TRUE where user_id = $1`,
+            [userId]
+        )
+        // set code to used (only used once)
+        await pool.query(
+            `
+            UPDATE invite_codes SET used_at = now() where used_by = $1`,
+            [userId]
+        )
+
+        // ✅ Login success → track it
+        await pool.query(
+            "INSERT INTO user_logins (user_id) VALUES ($1)",
+            [userId]
+        );
+
+        return res.json({ userId });
+    } catch (err) {
+        console.error("[Check Invite Code]", err);
+        return res.status(500).json({ error: "Server error" });
+    }
+}
 
 export const validateUser = async (req: Request, res: Response) => {
     const { email, username, password } = req.query;

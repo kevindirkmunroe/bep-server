@@ -8,6 +8,7 @@ import {
 } from "./controllers/eventsController";
 
 import {
+    checkUserInviteCode,
     createUser,
     getUser,
     getUserByEmail, loginUser,
@@ -28,6 +29,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/users/validate", validateUser);
+app.get("/users/invite", checkUserInviteCode);
 app.post("/users/login", loginUser);
 app.post("/users", createUser);
 app.get("/users", getUserByEmail);
