@@ -108,7 +108,7 @@ export const loginUser = async (req: Request, res: Response) => {
     const { username, password } = req.body;
     try {
         const result = await pool.query(
-            "SELECT user_id, password_hash FROM users WHERE username = $1",
+            "SELECT user_id, first_name, company, password_hash FROM users WHERE username = $1",
             [username]
         );
 
@@ -148,7 +148,11 @@ export const loginUser = async (req: Request, res: Response) => {
             [user.user_id]
         );
 
-        return res.json({ userId: user.user_id });
+        return res.json({
+            userId: user.user_id,
+            firstName: user.first_name,
+            company: user.company
+        });
     } catch (err) {
         console.error("[loginUser]", err);
         return res.status(500).json({ error: "Server error" });
