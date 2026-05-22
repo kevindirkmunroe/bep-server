@@ -25,8 +25,6 @@ const getPlatformRegion = async (zip: string, platform: string) => {
 
 export const mapRegion  = async (req: Request, resp: Response) => {
     const { zip, platform } = req.query;
-
-    console.log(`[mappingController] zip= ${zip} platform=${platform}`);
     if (typeof zip !== "string" || typeof platform !== "string") {
         return resp.status(400).json({ error: "Invalid params" });
     }

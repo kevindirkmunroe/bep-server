@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
 import pool from '../db';
-import {sendInviteEmail} from "../resend";
+import {sendInviteEmail} from "../mailers";
 
 export const createUser= async( req: Request, resp: Response) => {
 
@@ -62,8 +62,7 @@ export const getUser = async( req: Request, resp: Response) => {
 
             if(inviteCode.rows.length > 0) {
                 // send invite email first...
-                // TODO: auto-send codes, manual for now
-                // await sendInviteEmail(user.email, inviteCode.rows[0].code);
+                await sendInviteEmail(user.email, inviteCode.rows[0].code);
                 return resp.status(403).json({
                     error: `User not Verified: ${userId}.`,
                 });

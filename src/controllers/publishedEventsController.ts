@@ -1,6 +1,28 @@
 import { Request, Response } from "express";
 import pool from '../db';
 
+
+export const updatePublishedEventStatus = async( req: Request, resp: Response) => {
+    const eventId = req.params.eventId;
+    const { status } = req.body;
+    try{
+        const result = await pool.query(
+            `
+        UPDATE published_events
+            SET status = $1
+            WHERE event_id = $2
+        `,
+            [status, eventId]
+        )
+        return resp.json({
+            success: true
+        })
+
+    }catch(err: Error | any){
+        return resp.status(500).json({ error: err.message });
+    }
+}
+
 export const updatePublishedEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
     const platform = req.params.platform;
