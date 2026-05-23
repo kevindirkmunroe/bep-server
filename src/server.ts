@@ -1,4 +1,6 @@
 import express from "express";
+const session = require('express-session');
+
 import cors from "cors";
 import {
     createUserEvent,
@@ -8,10 +10,10 @@ import {
 } from "./controllers/eventsController";
 
 import {
-    checkUserInviteCode,
+    checkUserInviteCode, checkUserLoggedIn,
     createUser,
     getUser,
-    getUserByEmail, loginUser,
+    getUserByEmail, loginUser, logoutUser,
     validateUser
 } from "./controllers/usersController";
 
@@ -22,38 +24,61 @@ import {
     updatePublishedEvent
 } from "./controllers/publishedEventsController";
 import {mapRegion} from "./controllers/mappingController";
-import {loginLimiter, loginLimiterDEV, promoteLimiter, registerLimiter} from "./limiters";
-
+import {loginLimiter, promoteLimiter, registerLimiter} from "./limiters";
+import {requireAuth} from "./auth";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+console.log(`Running in Environment: ${process.env.NODE_ENV}`);
+
 app.use(cors());
 app.use(express.json());
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET!,   // long random string
+        resave: false,
+        saveUninitialized: false,
 
+        cookie: {
+            httpOnly: true,      // JS cannot read it
+            secure: false,       // true in production with HTTPS
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        }
+    })
+);
 
-// app.use("/users",registerLimiter);
-// app.use("/users/login",loginLimiter);
-// app.use("/events/:eventId/platforms/:platform", promoteLimiter);
+// Session management
+app.get("/users/me", checkUserLoggedIn);
+app.post("/users/logout", logoutUser);
 
+// Rate limiters
+if(process.env.NODE_ENV !== 'development'){
+    app.use("/users",registerLimiter);
+    app.use("/users/login",loginLimiter);
+    app.use("/events/:eventId/platforms/:platform",promoteLimiter);
+}
+
+// API
 app.get("/users/validate", validateUser);
 app.get("/users/invite", checkUserInviteCode);
 app.post("/users/login", loginUser);
 app.post("/users", createUser);
-app.get("/users", getUserByEmail);
-app.get("/users/:userId", getUser);
+app.get("/users", requireAuth, getUserByEmail);
+app.get("/users/:userId", requireAuth, getUser);
 
-app.post("/users/:userId/events", createUserEvent);
-app.get("/users/:userId/events", getUserEvents);
-app.put("/events/:eventId", updateUserEvent);
-app.delete("/events/:eventId", deleteUserEvent);
+app.post("/users/:userId/events", requireAuth,createUserEvent);
+app.get("/users/:userId/events", requireAuth,getUserEvents);
+app.put("/events/:eventId", requireAuth,updateUserEvent);
+app.delete("/events/:eventId", requireAuth,deleteUserEvent);
 
-app.patch("/events/:eventId", updatePublishedEventStatus);
-app.patch("/events/:eventId/platforms/:platform", updatePublishedEvent);
-app.get("/events/:eventId/platforms/:platform", getPublishedEvent);
-app.get("/events/:eventId", getPublishedEvents);
+app.patch("/events/:eventId", requireAuth,updatePublishedEventStatus);
+app.patch("/events/:eventId/platforms/:platform", requireAuth,updatePublishedEvent);
+app.get("/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
+app.get("/events/:eventId", requireAuth,getPublishedEvents);
 
-app.get("/mapRegion", mapRegion);
+app.get("/mapRegion", requireAuth,mapRegion);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

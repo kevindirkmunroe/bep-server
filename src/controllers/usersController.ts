@@ -3,6 +3,23 @@ import bcrypt from "bcrypt";
 
 import pool from '../db';
 import {sendInviteEmail} from "../mailers";
+import {SessionData} from "express-session";
+
+export const checkUserLoggedIn = (req: Request, resp: Response) => {
+    if (!(req.session as any).user) {
+        return resp.status(401).json({
+            error: "Not logged in"
+        });
+    }
+    resp.json((req.session as any).user);
+}
+
+export const logoutUser = (req: Request, resp: Response) => {
+    req.session.destroy(() => {
+        resp.clearCookie("connect.sid");
+        resp.json({ success: true });
+    });
+}
 
 export const createUser= async( req: Request, resp: Response) => {
 
@@ -147,6 +164,14 @@ export const loginUser = async (req: Request, res: Response) => {
             "INSERT INTO user_logins (user_id) VALUES ($1)",
             [user.user_id]
         );
+
+        // Store session
+        (req.session as any).user = {
+            userId: user.user_id,
+            username: user.username,
+            firstName: user.first_name,
+            company: user.company
+        };
 
         return res.json({
             userId: user.user_id,

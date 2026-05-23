@@ -15,16 +15,6 @@ export const loginLimiter = rateLimit({
     }
 });
 
-export const loginLimiterDEV = rateLimit({
-    windowMs: 60 * 1000, // 1 min
-    limit: 500,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-        error: "Too many login attempts. Try again in 15 minutes."
-    }
-});
-
 //
 // 2. REGISTER LIMIT
 // max 3 account creations / hour per IP

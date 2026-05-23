@@ -17,6 +17,9 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
 
+        /* Handle CommonJS better */
+        "allowSyntheticDefaultImports": true,
+
         /* Strictness (important signal) */
         "strict": true,
         "skipLibCheck": true,
@@ -33,10 +36,13 @@
     },
 
     "include": [
+        "src",
+        "types",
         "src/**/*",
         "ingestion/**/*",
         "scripts/**/*"
     ],
+    "files": ["types/express-session.d.ts"],
 
     "exclude": [
         "node_modules",
