@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import { generatePassword } from "password-generator";
 
 import pool from '../db';
 import {sendInviteEmail} from "../mailers";
@@ -22,8 +23,7 @@ export const logoutUser = (req: Request, resp: Response) => {
 }
 
 export const createUser= async( req: Request, resp: Response) => {
-
-     const { first_name, last_name, company, email, password, username} = req.body;
+    const { first_name, last_name, company, email, password, username} = req.body;
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
      try{
@@ -39,6 +39,41 @@ export const createUser= async( req: Request, resp: Response) => {
          console.error(err);
          return resp.status(500).json({ error: "Failed to create user" });
      }
+}
+
+export const forgotPassword = async (req: Request, resp: Response) => {
+    const { userIdentifier } = req.body;
+    console.log(`reset password for ${userIdentifier}`);
+    try{
+        const result = await pool.query( `
+            SELECT *
+            FROM
+                users
+            WHERE username = $1 OR email = $1
+        `,[userIdentifier]);
+
+        if(result.rows.length > 0){
+            const user = result.rows[0];
+            const tempPassword = await generatePassword(20, true);
+            const newHash = await bcrypt.hash(tempPassword, 10);
+            console.log(`update pwd ${tempPassword} for user: ${JSON.stringify(user)}`);
+            await pool.query( `
+                UPDATE users
+                SET password_hash = $1
+                where user_id = $2
+            `,[newHash, user.user_id]);
+
+            console.log(`new temp password for ${userIdentifier} is ${tempPassword}`);
+            // TODO: email temp password to user
+            return resp.status(200).json({ userId: user.user_id });
+        }else{
+            return resp.status(404).json({
+                error: `User not found: ${userIdentifier}.`,
+            });
+        }
+    }catch(err: Error | any){
+        return resp.status(500).json({ error: err.message });
+    }
 }
 
 export const getUser = async( req: Request, resp: Response) => {
@@ -120,6 +155,11 @@ export const getUserByEmail = async (req: Request, resp: Response) => {
         return resp.status(500).json({ error: err.message });
     }
 };
+
+export const resetUserPassword = async (req: Request, resp: Response) => {
+    const { userId, password } = req.body;
+    return resp.status(200).json({ message: "success."});
+}
 
 export const loginUser = async (req: Request, res: Response) => {
     const { username, password } = req.body;

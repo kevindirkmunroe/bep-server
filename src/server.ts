@@ -11,9 +11,12 @@ import {
 
 import {
     checkUserInviteCode, checkUserLoggedIn,
-    createUser,
+    createUser, forgotPassword,
     getUser,
-    getUserByEmail, loginUser, logoutUser,
+    getUserByEmail,
+    loginUser,
+    logoutUser,
+    resetUserPassword,
     validateUser
 } from "./controllers/usersController";
 
@@ -64,6 +67,9 @@ if(process.env.NODE_ENV !== 'development'){
 app.get("/users/validate", validateUser);
 app.get("/users/invite", checkUserInviteCode);
 app.post("/users/login", loginUser);
+app.post("/users/logout", logoutUser);
+app.post("/users/forgotpassword", forgotPassword);
+app.post("/users/resetpassword", resetUserPassword);
 app.post("/users", createUser);
 app.get("/users", requireAuth, getUserByEmail);
 app.get("/users/:userId", requireAuth, getUser);
