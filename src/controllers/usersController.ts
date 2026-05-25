@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { generatePassword } from "password-generator";
+import {SessionData} from "express-session";
 
 import pool from '../db';
-import {sendInviteEmail} from "../mailers";
-import {SessionData} from "express-session";
+import { MailProvider } from "../mailers/MailProvider";
+
+const mailer = MailProvider.getMailer();
 
 export const checkUserLoggedIn = (req: Request, resp: Response) => {
     if (!(req.session as any).user) {
@@ -64,7 +66,13 @@ export const forgotPassword = async (req: Request, resp: Response) => {
             `,[newHash, user.user_id]);
 
             console.log(`new temp password for ${userIdentifier} is ${tempPassword}`);
-            // TODO: email temp password to user
+
+            await mailer.send(
+                user.email,
+                "Reset your password",
+                `<p>Your temporary password is ${tempPassword}</p>`
+            );
+
             return resp.status(200).json({ userId: user.user_id });
         }else{
             return resp.status(404).json({
@@ -104,7 +112,7 @@ export const getUser = async( req: Request, resp: Response) => {
         const user = result.rows[0];
         if (!user.email_verified){
             const inviteCodeQuery = `
-                SELECT * FROM invite_codes 
+                SELECT * FROM invite_codes
                 WHERE used_by = $1
             `;
 
@@ -114,7 +122,11 @@ export const getUser = async( req: Request, resp: Response) => {
 
             if(inviteCode.rows.length > 0) {
                 // send invite email first...
-                await sendInviteEmail(user.email, inviteCode.rows[0].code);
+                await mailer.send(
+                    user.email,
+                    "Your Invite code",
+                    `<p>Your invite code is ${inviteCode.rows[0].code}. Go to login page and click 'Use Invite Code'</p>`)
+
                 return resp.status(403).json({
                     error: `User not Verified: ${userId}.`,
                 });

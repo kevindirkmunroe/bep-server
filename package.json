@@ -17,7 +17,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "express-session": "^1.19.0",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^8.0.8",
     "password-generator": "^3.0.0",
     "pg": "^8.20.0",
     "resend": "^6.12.3"
@@ -28,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.19.0",
     "@types/node": "^25.6.0",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
