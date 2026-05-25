@@ -59,7 +59,7 @@ export const forgotPassword = async (req: Request, resp: Response) => {
             console.log(`update pwd ${tempPassword} for user: ${JSON.stringify(user)}`);
             await pool.query( `
                 UPDATE users
-                SET password_hash = $1
+                SET password_hash = $1, updated_at = now()
                 where user_id = $2
             `,[newHash, user.user_id]);
 
@@ -156,13 +156,28 @@ export const getUserByEmail = async (req: Request, resp: Response) => {
     }
 };
 
-export const resetUserPassword = async (req: Request, resp: Response) => {
+export const changeUserPassword = async (req: Request, resp: Response) => {
     const { userId, password } = req.body;
-    return resp.status(200).json({ message: "success."});
+    const newHash = await bcrypt.hash(password, 10);
+    try{
+        const result = await pool.query(
+            "UPDATE users set password_hash = $1, updated_at = now() where user_id = $2",
+            [newHash, userId]
+        );
+
+        if(result.rowCount === 0){
+            return resp.status(404).json({ message: "No user passwords updated!" });
+        }
+
+        return resp.status(200).json({ message: "success!" });
+    }catch(err: Error | any){
+        return resp.status(400).json({ error: err.message});
+    }
 }
 
 export const loginUser = async (req: Request, res: Response) => {
     const { username, password } = req.body;
+    console.log(`Login: user ${username} password ${password}`);
     try {
         const result = await pool.query(
             "SELECT user_id, first_name, company, password_hash FROM users WHERE username = $1",
@@ -185,7 +200,7 @@ export const loginUser = async (req: Request, res: Response) => {
             const newHash = await bcrypt.hash(password, 10);
 
             await pool.query(
-                "UPDATE users SET password_hash = $1 WHERE user_id = $2",
+                "UPDATE users SET password_hash = $1, updated_at = now() WHERE user_id = $2",
                 [newHash, user.user_id]
             );
 
@@ -249,7 +264,7 @@ export const checkUserInviteCode = async (req: Request, res: Response) => {
         // update user verified...
         await pool.query(
             `
-            UPDATE users SET email_verified = TRUE where user_id = $1`,
+            UPDATE users SET email_verified = TRUE, updated_at = now() where user_id = $1`,
             [userId]
         )
         // set code to used (only used once)
