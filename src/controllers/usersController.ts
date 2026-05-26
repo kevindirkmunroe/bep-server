@@ -8,6 +8,39 @@ import { MailProvider } from "../mailers/MailProvider";
 
 const mailer = MailProvider.getMailer();
 
+export const requestInvite = async (req: Request, resp: Response) => {
+    const { name, email, company, use_case} = req.body;
+
+    // dedup requests
+    try{
+        const result = await pool.query(`
+            SELECT * from invite_requests where email = $1
+        `, [email]);
+
+        if(result.rows.length > 0 ){
+            return resp.status(400).json({ error: "Invite request already received for this user" });
+        }
+    }catch(err){
+        return resp.status(500).json({ error: "Failed to create Invite request" });
+    }
+
+    const initialStatus = 'pending';
+    try {
+        const result = await pool.query(`
+            INSERT into invite_requests (name, email, company, use_case, status)
+            VALUES ($1, $2, $3, $4, $5)
+        `, [name, email, company, use_case, initialStatus]);
+
+        if(result.rowCount === 0){
+            return resp.status(500).json({ error: "Failed to create Invite request" });
+        }
+        return resp.status(200).json({message: "Invite successfully created!"});
+    }catch(err){
+        console.error(err);
+        return resp.status(500).json({ error: "Failed to create Invite request" });
+    }
+}
+
 export const checkUserLoggedIn = (req: Request, resp: Response) => {
     if (!(req.session as any).user) {
         return resp.status(401).json({
@@ -24,7 +57,7 @@ export const logoutUser = (req: Request, resp: Response) => {
     });
 }
 
-export const createUser= async( req: Request, resp: Response) => {
+export const createUser= async ( req: Request, resp: Response) => {
     const { first_name, last_name, company, email, password, username} = req.body;
 
     const saltRounds = 10;

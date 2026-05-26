@@ -17,7 +17,7 @@ import {
     loginUser,
     logoutUser,
     changeUserPassword,
-    validateUser
+    validateUser, requestInvite
 } from "./controllers/usersController";
 
 import {
@@ -65,6 +65,7 @@ if(process.env.NODE_ENV !== 'development'){
 
 // API
 app.get("/users/validate", validateUser);
+app.post("/users/invite", requestInvite);
 app.post("/users/login", loginUser);
 app.post("/users/logout", logoutUser);
 app.post("/users/forgotpassword", forgotPassword);
