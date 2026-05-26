@@ -34,6 +34,11 @@ export const requestInvite = async (req: Request, resp: Response) => {
         if(result.rowCount === 0){
             return resp.status(500).json({ error: "Failed to create Invite request" });
         }
+
+        console.log(`about to send email...`);
+        await mailer.send('bayareaeventpromoter@gmail.com', "Invite request", `<p>Invite request from ${email}, company is ${company}</p>`);
+        console.log(`email sent!`);
+
         return resp.status(200).json({message: "Invite successfully created!"});
     }catch(err){
         console.error(err);
