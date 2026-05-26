@@ -10,7 +10,7 @@ import {
 } from "./controllers/eventsController";
 
 import {
-    checkUserInviteCode, checkUserLoggedIn,
+    checkUserLoggedIn,
     createUser, forgotPassword,
     getUser,
     getUserByEmail,
@@ -65,7 +65,6 @@ if(process.env.NODE_ENV !== 'development'){
 
 // API
 app.get("/users/validate", validateUser);
-app.get("/users/invite", checkUserInviteCode);
 app.post("/users/login", loginUser);
 app.post("/users/logout", logoutUser);
 app.post("/users/forgotpassword", forgotPassword);

@@ -26,6 +26,7 @@ export const logoutUser = (req: Request, resp: Response) => {
 
 export const createUser= async( req: Request, resp: Response) => {
     const { first_name, last_name, company, email, password, username} = req.body;
+
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
      try{
@@ -107,34 +108,6 @@ export const getUser = async( req: Request, resp: Response) => {
             return resp.status(404).json({
                 error: `User not found: ${userId}`,
             });
-        }
-
-        const user = result.rows[0];
-        if (!user.email_verified){
-            const inviteCodeQuery = `
-                SELECT * FROM invite_codes
-                WHERE used_by = $1
-            `;
-
-            const inviteCode = await pool.query(inviteCodeQuery, [
-                userId
-            ]);
-
-            if(inviteCode.rows.length > 0) {
-                // send invite email first...
-                await mailer.send(
-                    user.email,
-                    "Your Invite code",
-                    `<p>Your invite code is ${inviteCode.rows[0].code}. Go to login page and click 'Use Invite Code'</p>`)
-
-                return resp.status(403).json({
-                    error: `User not Verified: ${userId}.`,
-                });
-            }else{
-                return resp.status(401).json({
-                    error: `User invitation not found: ${userId}.`,
-                });
-            }
         }
 
         return resp.json({
@@ -251,56 +224,8 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 };
 
-export const checkUserInviteCode = async (req: Request, res: Response) => {
-    const { username, inviteCode } = req.query;
-    try {
-        // Find invite code for user. Check it matches request AND is unused.
-        const result = await pool.query(
-            `
-            SELECT c.code, c.used_by, c.used_at, u.user_id
-            FROM users u, invite_codes c
-            WHERE c.used_by = u.user_id
-            AND c.used_at is NULL
-            AND u.username = $1
-            AND c.code = $2
-            `,
-            [username, inviteCode]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(401).json({ error: "Invalid Invite Code" });
-        }
-
-        const userId = result.rows[0].user_id;
-
-        // update user verified...
-        await pool.query(
-            `
-            UPDATE users SET email_verified = TRUE, updated_at = now() where user_id = $1`,
-            [userId]
-        )
-        // set code to used (only used once)
-        await pool.query(
-            `
-            UPDATE invite_codes SET used_at = now() where used_by = $1`,
-            [userId]
-        )
-
-        // ✅ Login success → track it
-        await pool.query(
-            "INSERT INTO user_logins (user_id) VALUES ($1)",
-            [userId]
-        );
-
-        return res.json({ userId });
-    } catch (err) {
-        console.error("[Check Invite Code]", err);
-        return res.status(500).json({ error: "Server error" });
-    }
-}
-
 export const validateUser = async (req: Request, res: Response) => {
-    const { email, username, password } = req.query;
+    const { email, username, password, invite_code } = req.query;
 
     try {
         // 🔹 1. Basic presence check
@@ -348,6 +273,29 @@ export const validateUser = async (req: Request, res: Response) => {
                 valid: false,
                 reason: "username_exists",
                 message: "Username already taken"
+            });
+        }
+
+        // 🔹 5. Check invite code for email exists AND registrant passed matching code
+        const inviteCodeResult = await pool.query(
+            "SELECT code FROM invite_codes WHERE used_by = $1",
+            [email]
+        );
+        if(inviteCodeResult.rows.length === 0){
+            console.log(`[UserController] ${email} has no invite code`);
+            return res.json({
+                valid: false,
+                reason: "invalid_invite_code",
+                message: "Invalid Invite code"
+            });
+        }
+
+        if(inviteCodeResult.rows[0].code !== invite_code){
+            console.log(`[UserController] ${email} has invalid invite code`);
+            return res.json({
+                valid: false,
+                reason: "invalid_invite_code",
+                message: "Invalid Invite code"
             });
         }
 
