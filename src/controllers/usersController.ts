@@ -24,19 +24,20 @@ export const requestInvite = async (req: Request, resp: Response) => {
         return resp.status(500).json({ error: "Failed to create Invite request" });
     }
 
-    const initialStatus = 'pending';
     try {
         const result = await pool.query(`
-            INSERT into invite_requests (name, email, company, use_case, status)
-            VALUES ($1, $2, $3, $4, $5)
-        `, [name, email, company, use_case, initialStatus]);
+            INSERT into invite_requests (name, email, company, use_case)
+            VALUES ($1, $2, $3, $4)
+        `, [name, email, company, use_case]);
 
         if(result.rowCount === 0){
             return resp.status(500).json({ error: "Failed to create Invite request" });
         }
 
         // Send reminder to admin
-        await mailer.send('bayareaeventpromoter@gmail.com', "Invite request", `<p>Invite request from ${email}, company is ${company}</p>`);
+        const companyClause = company? `, company is ${company}.` : '';
+        await mailer.send('bayareaeventpromoter@gmail.com', "Invite request",
+            `<p>Invite request from ${email} ${companyClause}.<br/>${use_case}</p>`);
 
         return resp.status(200).json({message: "Invite successfully created!"});
     }catch(err){
@@ -315,7 +316,7 @@ export const validateUser = async (req: Request, res: Response) => {
 
         // 🔹 5. Check invite code for email exists AND registrant passed matching code
         const inviteCodeResult = await pool.query(
-            "SELECT invite_code FROM invite_requests WHERE email = $1",
+            "SELECT invite_code FROM invite_requests WHERE email = $1 AND status = 'approved'",
             [email]
         );
         if(inviteCodeResult.rows.length === 0){
