@@ -48,8 +48,8 @@ app.use(
 
         cookie: {
             httpOnly: true,      // JS cannot read it
-            secure: false,       // true in production with HTTPS
-            sameSite: "lax",
+            secure: true,       // true in production with HTTPS
+            sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         }
     })
@@ -74,36 +74,20 @@ app.post("/users/logout", logoutUser);
 app.post("/users/forgotpassword", forgotPassword);
 app.post("/users/changepassword", changeUserPassword);
 app.post("/users", createUser);
-app.get("/users", getUserByEmail);
-app.get("/users/:userId", getUser);
+app.get("/users", requireAuth, getUserByEmail);
+app.get("/users/:userId", requireAuth, getUser);
 
-app.post("/users/:userId/events",createUserEvent);
-app.get("/users/:userId/events",getUserEvents);
-app.put("/events/:eventId",updateUserEvent);
-app.delete("/events/:eventId",deleteUserEvent);
+app.post("/users/:userId/events", requireAuth,createUserEvent);
+app.get("/users/:userId/events", requireAuth,getUserEvents);
+app.put("/events/:eventId", requireAuth,updateUserEvent);
+app.delete("/events/:eventId", requireAuth,deleteUserEvent);
 
-app.patch("/events/:eventId",updatePublishedEventStatus);
-app.patch("/events/:eventId/platforms/:platform",updatePublishedEvent);
-app.get("/events/:eventId/platforms/:platform",getPublishedEvent);
-app.get("/events/:eventId",getPublishedEvents);
+app.patch("/events/:eventId", requireAuth,updatePublishedEventStatus);
+app.patch("/events/:eventId/platforms/:platform", requireAuth,updatePublishedEvent);
+app.get("/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
+app.get("/events/:eventId", requireAuth,getPublishedEvents);
 
-app.get("/mapRegion",mapRegion);
-
-// TODO: fix requireAuth failing in PROD
-// app.get("/users", requireAuth, getUserByEmail);
-// app.get("/users/:userId", requireAuth, getUser);
-//
-// app.post("/users/:userId/events", requireAuth,createUserEvent);
-// app.get("/users/:userId/events", requireAuth,getUserEvents);
-// app.put("/events/:eventId", requireAuth,updateUserEvent);
-// app.delete("/events/:eventId", requireAuth,deleteUserEvent);
-//
-// app.patch("/events/:eventId", requireAuth,updatePublishedEventStatus);
-// app.patch("/events/:eventId/platforms/:platform", requireAuth,updatePublishedEvent);
-// app.get("/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
-// app.get("/events/:eventId", requireAuth,getPublishedEvents);
-//
-// app.get("/mapRegion", requireAuth,mapRegion);
+app.get("/mapRegion", requireAuth,mapRegion);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
