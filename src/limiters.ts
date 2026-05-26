@@ -7,7 +7,7 @@ import { Request } from "express";
 //
 export const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
-    limit: 50,
+    limit: 5,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
