@@ -35,9 +35,8 @@ export const requestInvite = async (req: Request, resp: Response) => {
             return resp.status(500).json({ error: "Failed to create Invite request" });
         }
 
-        console.log(`about to send email...`);
+        // Send reminder to admin
         await mailer.send('bayareaeventpromoter@gmail.com', "Invite request", `<p>Invite request from ${email}, company is ${company}</p>`);
-        console.log(`email sent!`);
 
         return resp.status(200).json({message: "Invite successfully created!"});
     }catch(err){
@@ -316,7 +315,7 @@ export const validateUser = async (req: Request, res: Response) => {
 
         // 🔹 5. Check invite code for email exists AND registrant passed matching code
         const inviteCodeResult = await pool.query(
-            "SELECT code FROM invite_codes WHERE used_by = $1",
+            "SELECT invite_code FROM invite_requests WHERE email = $1",
             [email]
         );
         if(inviteCodeResult.rows.length === 0){
@@ -328,8 +327,9 @@ export const validateUser = async (req: Request, res: Response) => {
             });
         }
 
-        if(inviteCodeResult.rows[0].code !== invite_code){
-            console.log(`[UserController] ${email} has invalid invite code`);
+        console.log(`user sent ${invite_code}, got ${inviteCodeResult.rows[0].invite_code}`);
+        if(inviteCodeResult.rows[0].invite_code !== invite_code){
+            console.log(`[UserController] ${email} invite code does not match`);
             return res.json({
                 valid: false,
                 reason: "invalid_invite_code",
