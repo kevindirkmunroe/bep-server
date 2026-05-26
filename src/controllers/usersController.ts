@@ -52,6 +52,7 @@ export const checkUserLoggedIn = (req: Request, resp: Response) => {
             error: "Not logged in"
         });
     }
+    resp.set("Cache-Control", "no-store");
     resp.json((req.session as any).user);
 }
 
