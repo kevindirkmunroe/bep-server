@@ -9,7 +9,7 @@
         ],
 
         /* Project structure */
-        "rootDir": ".",
+        "rootDir": "src",
         "outDir": "dist",
 
         /* Module resolution */
