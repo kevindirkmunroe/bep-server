@@ -13,7 +13,7 @@
         "outDir": "dist",
 
         /* Module resolution */
-        "moduleResolution": "node16",
+        "moduleResolution": "node",
         "esModuleInterop": true,
         "resolveJsonModule": true,
 
@@ -32,6 +32,8 @@
 
         /* Allow running with ts-node easily */
         "types": ["node"],
+
+        "ignoreDeprecations": "6.0",
       "jsx": "react"
     },
 
