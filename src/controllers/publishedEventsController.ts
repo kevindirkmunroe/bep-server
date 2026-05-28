@@ -46,7 +46,6 @@ export const updatePublishedEvent = async( req: Request, resp: Response) => {
         `,
             [status, external_url, eventId, platform, payload]
         )
-        console.log("[PublishedEventController] rows updated:", result.rowCount);
         return resp.json({
             success: true
         })
