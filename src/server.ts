@@ -3,6 +3,7 @@ const session = require('express-session');
 
 import cors from "cors";
 import {
+    cloneUserEvent,
     createUserEvent,
     deleteUserEvent,
     getUserEvents,
@@ -84,6 +85,7 @@ app.get("/users/:userId", requireAuth, getUser);
 
 app.post("/users/:userId/events", requireAuth,createUserEvent);
 app.get("/users/:userId/events", requireAuth,getUserEvents);
+app.post("/events/:eventId/clone", requireAuth,cloneUserEvent);
 app.put("/events/:eventId", requireAuth,updateUserEvent);
 app.delete("/events/:eventId", requireAuth,deleteUserEvent);
 

@@ -51,6 +51,88 @@ export const createUserEvent= async( req: Request, resp: Response) => {
     }
 }
 
+export const cloneUserEvent = async( req: Request, resp: Response) => {
+    const eventId = req.params.eventId;
+    const client = await pool.connect();
+    await client.query('BEGIN');
+
+    try{
+        const result = await client.query(`
+            INSERT INTO events (
+                event_id,
+                user_id,
+                title,
+                description,
+                start_datetime,
+                location_name,
+                address,
+                price,
+                category,
+                created_at,
+                updated_at,
+                image_url,
+                tags,
+                name,
+                email,
+                website,
+                organization,
+                phone, 
+                zip
+            )
+            SELECT
+                gen_random_uuid(),
+                user_id,
+                title || ' (Copy)',
+                description,
+                start_datetime,
+                location_name,
+                address,
+                price,
+                category,
+                NOW(),
+                NOW(),
+                image_url,
+                tags,
+                name,
+                email,
+                website,
+                organization,
+                phone,
+                zip
+            FROM events
+            WHERE event_id = $1
+            RETURNING event_id;
+            `,
+            [eventId]
+            ,
+        );
+
+        if(result.rowCount === 0){
+            resp.status(400).json({error: "Event was not cloned."});
+        }
+        const cloneId = result.rows[0].event_id;
+
+        for (const platform of SUPPORTED_PLATFORMS) {
+            await client.query(`
+                        INSERT INTO published_events (event_id, platform, status)
+                        VALUES ($1, $2, 'not_started');
+                `,
+                [cloneId, platform]
+            );
+        }
+
+        await client.query("COMMIT");
+
+        resp.status(201).json(result.rows[0]);
+    }catch(err){
+        await client.query('ROLLBACK');
+        console.log(`cloning failed: ${err}`);
+        return resp.status(500).json({err});
+    }finally {
+        client.release();   // ✅ ALWAYS release
+    }
+}
+
 export const updateUserEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
     const fields = req.body;
