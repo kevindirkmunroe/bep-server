@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import pool from '../db';
 
-const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland"];
+const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay"];
 
 export const createUserEvent= async( req: Request, resp: Response) => {
 

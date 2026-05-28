@@ -41,7 +41,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.set("trust proxy", 1);
+const isProd = process.env.NODE_ENV === "production";
+
+app.set("trust proxy", isProd ? 1 : 0);
 
 app.use(
     session({
@@ -51,8 +53,8 @@ app.use(
 
         cookie: {
             httpOnly: true,      // JS cannot read it
-            secure: true,       // true in production with HTTPS
-            sameSite: "none",
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         }
     })
