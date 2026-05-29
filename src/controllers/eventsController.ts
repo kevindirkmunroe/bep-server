@@ -133,6 +133,32 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
     }
 }
 
+export const restoreUserEvent = async( req: Request, resp: Response) => {
+    const eventId = req.params.eventId;
+    const {start_date} = req.body;
+    const client = await pool.connect();
+    try {
+        const result = await client.query(`
+                    UPDATE events
+                    SET start_datetime = $1,
+                        updated_at = NOW()
+                    WHERE event_id = $2 
+                    RETURNING *
+            `,
+            [start_date, eventId]
+            ,
+        );
+
+        if (result.rows.length === 0) {
+            return resp.status(404).json({error: "Event not found"});
+        }
+        resp.status(200).json(result.rows[0]);
+    }catch(err){
+        console.error(err);
+        resp.status(500).json({ error: "Failed to update event" });
+    }
+}
+
 export const updateUserEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
     const fields = req.body;

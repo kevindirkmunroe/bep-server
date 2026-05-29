@@ -7,18 +7,21 @@ import {
     createUserEvent,
     deleteUserEvent,
     getUserEvents,
+    restoreUserEvent,
     updateUserEvent
 } from "./controllers/eventsController";
 
 import {
     checkUserLoggedIn,
-    createUser, forgotPassword,
+    createUser,
+    forgotPassword,
     getUser,
     getUserByEmail,
     loginUser,
     logoutUser,
     changeUserPassword,
-    validateUser, requestInvite
+    validateUser,
+    requestInvite
 } from "./controllers/usersController";
 
 import {
@@ -86,6 +89,7 @@ app.get("/users/:userId", requireAuth, getUser);
 app.post("/users/:userId/events", requireAuth,createUserEvent);
 app.get("/users/:userId/events", requireAuth,getUserEvents);
 app.post("/events/:eventId/clone", requireAuth,cloneUserEvent);
+app.patch("/events/:eventId/restore", requireAuth,restoreUserEvent);
 app.put("/events/:eventId", requireAuth,updateUserEvent);
 app.delete("/events/:eventId", requireAuth,deleteUserEvent);
 
