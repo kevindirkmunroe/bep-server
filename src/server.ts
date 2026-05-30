@@ -70,7 +70,7 @@ app.post("/users/logout", logoutUser);
 
 // Rate limiters
 if(process.env.NODE_ENV !== 'development'){
-    app.use("/users",registerLimiter);
+    app.use("/users/register",registerLimiter);
     app.use("/users/login",loginLimiter);
     app.use("/events/:eventId/platforms/:platform",promoteLimiter);
 }
@@ -82,7 +82,7 @@ app.post("/users/login", loginUser);
 app.post("/users/logout", logoutUser);
 app.post("/users/forgotpassword", forgotPassword);
 app.post("/users/changepassword", changeUserPassword);
-app.post("/users", createUser);
+app.post("/users/register", createUser);
 app.get("/users", requireAuth, getUserByEmail);
 app.get("/users/:userId", requireAuth, getUser);
 
