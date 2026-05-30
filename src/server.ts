@@ -30,7 +30,7 @@ import {
     updatePublishedEventStatus,
     updatePublishedEvent
 } from "./controllers/publishedEventsController";
-import {mapRegion} from "./controllers/mappingController";
+import {mapZipToRegion} from "./controllers/mappingController";
 import {loginLimiter, promoteLimiter, registerLimiter} from "./limiters";
 import {requireAuth} from "./auth";
 
@@ -98,7 +98,7 @@ app.patch("/events/:eventId/platforms/:platform", requireAuth,updatePublishedEve
 app.get("/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
 app.get("/events/:eventId", requireAuth,getPublishedEvents);
 
-app.get("/mapRegion", requireAuth,mapRegion);
+app.post("/mapRegion", mapZipToRegion);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
