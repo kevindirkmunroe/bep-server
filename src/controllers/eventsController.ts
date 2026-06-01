@@ -18,7 +18,7 @@ export const createUserEvent= async( req: Request, resp: Response) => {
         const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
                                        image_url, tags, created_at, updated_at, name, email, zip, category)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                     RETURNING event_id
             `,
             [userId, title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, ts, ts, name, email, zip, category]
