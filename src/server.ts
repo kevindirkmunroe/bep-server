@@ -65,40 +65,40 @@ app.use(
 );
 
 // Session management
-app.get("/users/me", checkUserLoggedIn);
-app.post("/users/logout", logoutUser);
+app.get("/api/users/me", checkUserLoggedIn);
+app.post("/api/users/logout", logoutUser);
 
 // Rate limiters
 if(process.env.NODE_ENV !== 'development'){
-    app.use("/users/register",registerLimiter);
-    app.use("/users/login",loginLimiter);
-    app.use("/events/:eventId/platforms/:platform",promoteLimiter);
+    app.use("/api/users/register",registerLimiter);
+    app.use("/api/users/login",loginLimiter);
+    app.use("/api/events/:eventId/platforms/:platform",promoteLimiter);
 }
 
 // API
-app.get("/users/validate", validateUser);
-app.post("/users/invite", requestInvite);
-app.post("/users/login", loginUser);
-app.post("/users/logout", logoutUser);
-app.post("/users/forgotpassword", forgotPassword);
-app.post("/users/changepassword", changeUserPassword);
-app.post("/users/register", createUser);
-app.get("/users", requireAuth, getUserByEmail);
-app.get("/users/:userId", requireAuth, getUser);
+app.get("/api/users/validate", validateUser);
+app.post("/api/users/invite", requestInvite);
+app.post("/api/users/login", loginUser);
+app.post("/api/users/logout", logoutUser);
+app.post("/api/users/forgotpassword", forgotPassword);
+app.post("/api/users/changepassword", changeUserPassword);
+app.post("/api/users/register", createUser);
+app.get("/api/users", requireAuth, getUserByEmail);
+app.get("/api/users/:userId", requireAuth, getUser);
 
-app.post("/users/:userId/events", requireAuth,createUserEvent);
-app.get("/users/:userId/events", requireAuth,getUserEvents);
-app.post("/events/:eventId/clone", requireAuth,cloneUserEvent);
-app.patch("/events/:eventId/restore", requireAuth,restoreUserEvent);
-app.put("/events/:eventId", requireAuth,updateUserEvent);
-app.delete("/events/:eventId", requireAuth,deleteUserEvent);
+app.post("/api/users/:userId/events", requireAuth,createUserEvent);
+app.get("/api/users/:userId/events", requireAuth,getUserEvents);
+app.post("/api/events/:eventId/clone", requireAuth,cloneUserEvent);
+app.patch("/api/events/:eventId/restore", requireAuth,restoreUserEvent);
+app.put("/api/events/:eventId", requireAuth,updateUserEvent);
+app.delete("/api/events/:eventId", requireAuth,deleteUserEvent);
 
-app.patch("/events/:eventId", requireAuth,updatePublishedEventStatus);
-app.patch("/events/:eventId/platforms/:platform", requireAuth,updatePublishedEvent);
-app.get("/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
-app.get("/events/:eventId", requireAuth,getPublishedEvents);
+app.patch("/api/events/:eventId", requireAuth,updatePublishedEventStatus);
+app.patch("/api/events/:eventId/platforms/:platform", requireAuth,updatePublishedEvent);
+app.get("/api/events/:eventId/platforms/:platform", requireAuth,getPublishedEvent);
+app.get("/api/events/:eventId", requireAuth,getPublishedEvents);
 
-app.post("/mapRegion", mapZipToRegion);
+app.post("/api/mapRegion", mapZipToRegion);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
