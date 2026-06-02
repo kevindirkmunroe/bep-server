@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "NODE_ENV=development ts-node src/server.ts",
     "build": "tsc",
+    "test": "npm run test:integration",
+    "test:integration": "node --test tests/integration/*.test.js",
     "start": "node dist/server.js"
   },
   "dependencies": {
