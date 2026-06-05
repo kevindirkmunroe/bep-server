@@ -80,7 +80,7 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 zip
             )
             SELECT
-                gen_random_uuid(),
+                gen_random_uuid() as event_id,
                 user_id,
                 title || ' (Copy)',
                 description,
@@ -235,8 +235,8 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.event_id,
             e.title,
             e.description,
-            e.start_datetime,
-            e.end_datetime,
+            TO_CHAR(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
+            TO_CHAR(end_datetime, 'YYYY-MM-DD HH24:MI:SS') AS end_datetime,
             e.location_name,
             e.address,
             e.price,

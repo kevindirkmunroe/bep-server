@@ -91,7 +91,23 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
 
     try {
         const eventRes = await client.query(
-            `SELECT * FROM events WHERE event_id = $1`,
+            `SELECT             
+                                e.event_id,
+                                e.title,
+                                e.description,
+                                TO_CHAR(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
+                                TO_CHAR(end_datetime, 'YYYY-MM-DD HH24:MI:SS') AS end_datetime,
+                                e.location_name,
+                                e.address,
+                                e.price,
+                                e.image_url,
+                                e.name,
+                                e.website,
+                                e.email,
+                                e.organization,
+                                e.phone,
+                                e.category,
+                                e.zip FROM events e WHERE event_id = $1`,
             [eventId]
         );
 

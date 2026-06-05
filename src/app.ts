@@ -30,7 +30,7 @@ import {
     updatePublishedEventStatus,
     updatePublishedEvent
 } from "./controllers/publishedEventsController";
-import { mapZipToRegion } from "./controllers/mappingController";
+import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
 import { loginLimiter, promoteLimiter, registerLimiter } from "./limiters";
 import { requireAuth } from "./auth";
 
@@ -95,6 +95,7 @@ app.patch("/events/:eventId/platforms/:platform", requireAuth, updatePublishedEv
 app.get("/events/:eventId/platforms/:platform", requireAuth, getPublishedEvent);
 app.get("/events/:eventId", requireAuth, getPublishedEvents);
 
-app.post("/mapRegion", mapZipToRegion);
+app.get("/mapRegion", mapZipToRegion);
+app.get("/mapCity", mapZipToCity);
 
 export default app;
