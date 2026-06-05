@@ -91,6 +91,7 @@ app.get("/events/public", async (req, res) => {
       price,
       website
     FROM events
+    WHERE start_datetime >= NOW()
     ORDER BY start_datetime ASC
   `);
 
