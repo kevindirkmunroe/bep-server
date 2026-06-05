@@ -33,11 +33,24 @@ import {
 import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
 import { loginLimiter, promoteLimiter, registerLimiter } from "./limiters";
 import { requireAuth } from "./auth";
+import pool from "./db";
 
 const app = express();
 
+const allowedOrigins = [
+    "http://localhost:4150",
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS blocked origin: ${origin}`));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
@@ -64,6 +77,24 @@ app.use(
 // Session management
 app.get("/users/me", checkUserLoggedIn);
 app.post("/users/logout", logoutUser);
+app.get("/events/public", async (req, res) => {
+    const result = await pool.query(`
+    SELECT
+      event_id,
+      title,
+      description,
+      start_datetime,
+      location_name,
+      address,
+      category,
+      price,
+      website
+    FROM events
+    ORDER BY start_datetime ASC
+  `);
+
+    res.json({ data: result.rows });
+});
 
 // Rate limiters
 if (process.env.NODE_ENV !== "development") {
@@ -97,5 +128,6 @@ app.get("/events/:eventId", requireAuth, getPublishedEvents);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);
+
 
 export default app;
