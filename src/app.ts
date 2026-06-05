@@ -40,6 +40,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:4150",
     "http://localhost:5173",
+    "https://localbuzz-events-feed.onrender.com",
     process.env.FRONTEND_URL
 ];
 
