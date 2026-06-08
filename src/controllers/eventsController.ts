@@ -53,6 +53,7 @@ export const createUserEvent= async( req: Request, resp: Response) => {
 
 export const cloneUserEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
+    const {start_date} = req.body;
     const client = await pool.connect();
     await client.query('BEGIN');
 
@@ -119,6 +120,16 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 `,
                 [cloneId, platform]
             );
+        }
+
+        console.log(`[EventsController] clone new start date=${start_date}`);
+        if(start_date){
+            await client.query(
+                `UPDATE events 
+                SET start_datetime = $1
+                WHERE event_id = $2`,
+                [start_date, cloneId]
+            )
         }
 
         await client.query("COMMIT");
