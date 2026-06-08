@@ -53,7 +53,7 @@ export const createUserEvent= async( req: Request, resp: Response) => {
 
 export const cloneUserEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
-    const {start_date} = req.body;
+    const {start_date} = req.body || {};
     const client = await pool.connect();
     await client.query('BEGIN');
 
