@@ -288,17 +288,20 @@ export const validateUser = async (req: Request, res: Response) => {
         }
 
         // 🔹 3. Check email exists
-        const emailResult = await pool.query(
-            "SELECT 1 FROM users WHERE email = $1 LIMIT 1",
-            [email]
-        );
+        // Hack: allow bayareaeventpromoter@gmail.com email to register infinite times
+        if(email !== "bayareaeventpromoter@gmail.com"){
+            const emailResult = await pool.query(
+                "SELECT 1 FROM users WHERE email = $1 LIMIT 1",
+                [email]
+            );
 
-        if (emailResult.rows.length > 0) {
-            return res.json({
-                valid: false,
-                reason: "email_exists",
-                message: "Email already registered"
-            });
+            if (emailResult.rows.length > 0) {
+                return res.json({
+                    valid: false,
+                    reason: "email_exists",
+                    message: "Email already registered"
+                });
+            }
         }
 
         // 🔹 4. Check username exists

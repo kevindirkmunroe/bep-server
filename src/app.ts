@@ -75,16 +75,17 @@ app.use(
     })
 );
 
-// Session management
 app.get("/users/me", checkUserLoggedIn);
 app.post("/users/logout", logoutUser);
+
+// Endpoint for localbuzz-events-feed
 app.get("/events/public", async (req, res) => {
     const result = await pool.query(`
     SELECT
       event_id,
       title,
       description,
-      start_datetime,
+      to_char(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
       location_name,
       address,
       category,
