@@ -94,7 +94,7 @@ app.get("/events/public", async (req, res) => {
       website
     FROM events
     WHERE start_datetime >= NOW()
-    ORDER BY start_datetime ASC
+    ORDER BY start_datetime DESC
   `);
 
     res.json({ data: result.rows });
