@@ -20,7 +20,7 @@ export const importUserEventFromFacebook = async( req: Request, resp: Response) 
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    startUrls: [{ url: facebookEventUrl }]
+                    eventUrls: [facebookEventUrl]
                 })
             }
         );
