@@ -328,7 +328,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                            ON e.event_id = p.event_id
         WHERE e.user_id = $1
         GROUP BY e.event_id
-        ORDER BY e.start_datetime ASC
+        ORDER BY e.start_datetime DESC
     `
     const result = await pool.query(query, [
         userId
