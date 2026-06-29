@@ -3,6 +3,59 @@ import pool from '../db';
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay"];
 
+export const importUserEventFromFacebook = async( req: Request, resp: Response) => {
+        const { facebookEventUrl } = req.body || {};
+
+        if (!facebookEventUrl) {
+            return resp.status(400).json({ error: "facebookEventUrl is required" });
+        }
+
+        const apifyToken = process.env.APIFY_TOKEN;
+
+        const apifyRes = await fetch(
+            `https://api.apify.com/v2/acts/crawlerbros~facebook-events-scraper/run-sync-get-dataset-items?token=${apifyToken}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    startUrls: [{ url: facebookEventUrl }]
+                })
+            }
+        );
+
+        if (!apifyRes.ok) {
+            const text = await apifyRes.text();
+            return resp.status(502).json({
+                error: "Facebook import failed",
+                detail: text
+            });
+        }
+
+        const items = await apifyRes.json();
+        const fbEvent = items?.[0];
+
+        if (!fbEvent) {
+            return resp.status(404).json({
+                error: "No event data found for this Facebook URL"
+            });
+        }
+
+        const importedEvent = {
+            title: fbEvent.name || fbEvent.title || "",
+            description: fbEvent.description || "",
+            start_datetime: fbEvent.startDate || fbEvent.start_time || "",
+            end_datetime: fbEvent.endDate || fbEvent.end_time || "",
+            location_name: fbEvent.location?.name || fbEvent.place?.name || "",
+            address: fbEvent.location?.address || fbEvent.address || "",
+            website: facebookEventUrl,
+            image_url: fbEvent.image || fbEvent.coverPhoto || ""
+        };
+
+    resp.json({ data: importedEvent, raw: fbEvent });
+}
+
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;
