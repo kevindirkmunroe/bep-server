@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import pool from '../db';
 
-const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay"];
+const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay"];
 
 export const importUserEventFromFacebook = async( req: Request, resp: Response) => {
         const { facebookEventUrl } = req.body || {};
