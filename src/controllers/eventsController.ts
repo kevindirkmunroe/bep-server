@@ -56,6 +56,62 @@ export const importUserEventFromFacebook = async( req: Request, resp: Response) 
     resp.json({ data: importedEvent, raw: fbEvent });
 }
 
+export const importUserEventFromEventbrite = async (req: Request, resp: Response) => {
+    try {
+        const url = req.query.url as string;
+
+        const response = await fetch(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0"
+            }
+        });
+        const html = await response.text();
+
+        const matches = html.matchAll(
+            /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/g
+        );
+
+        let eventJsonLd = null;
+
+        for (const match of matches) {
+            try {
+                const data = JSON.parse(match[1]);
+
+                if (data?.["@type"] === "Event") {
+                    eventJsonLd = data;
+                    break;
+                }
+
+                if (Array.isArray(data)) {
+                    const event = data.find(
+                        item => item?.["@type"] === "Event"
+                    );
+
+                    if (event) {
+                        eventJsonLd = event;
+                        break;
+                    }
+                }
+            } catch (err) {
+                console.warn("Invalid JSON-LD block");
+            }
+        }
+
+        if (!eventJsonLd) {
+            return resp.status(404).json({
+                error: "Event JSON-LD not found"
+            });
+        }
+
+        resp.json(eventJsonLd);
+    } catch (err) {
+        console.error(err);
+        resp.status(500).json({
+            error: "Failed to import Eventbrite event"
+        });
+    }
+}
+
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;

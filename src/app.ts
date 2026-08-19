@@ -9,7 +9,8 @@ import {
     getUserEvents,
     restoreUserEvent,
     updateUserEvent,
-    importUserEventFromFacebook
+    importUserEventFromFacebook,
+    importUserEventFromEventbrite
 } from "./controllers/eventsController";
 
 import {
@@ -125,6 +126,7 @@ app.patch("/events/:eventId/restore", requireAuth, restoreUserEvent);
 app.put("/events/:eventId", requireAuth, updateUserEvent);
 app.delete("/events/:eventId", requireAuth, deleteUserEvent);
 app.post("/events/import/facebook", requireAuth, importUserEventFromFacebook);
+app.get("/events/import/eventbrite", requireAuth, importUserEventFromEventbrite);
 
 app.patch("/events/:eventId", requireAuth, updatePublishedEventStatus);
 app.patch("/events/:eventId/platforms/:platform", requireAuth, updatePublishedEvent);
