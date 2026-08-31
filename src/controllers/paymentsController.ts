@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import pool from '../db';
 
 
-function getOrderCost(order): number {
-    switch (order.promote_selection) {
+function getOrderCost(order: string): number {
+    switch (order) {
         case "DIY":
             return 1995;
 
@@ -52,7 +52,7 @@ export const checkout= async( req: Request, resp: Response) => {
                     order.order_id,
                     checkoutSessionId,
                     paymentIntentId,
-                    getOrderCost(order),
+                    getOrderCost(order.promote_selection),
                     "succeeded"
                 ]
             );
