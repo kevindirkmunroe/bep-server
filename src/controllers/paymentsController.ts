@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import pool from '../db';
 
 
-function getOrderCost(order: string): number {
-    switch (order) {
+function getOrderCost(promote_selection: string): number {
+    switch (promote_selection) {
         case "DIY":
             return 1995;
 
@@ -12,7 +12,7 @@ function getOrderCost(order: string): number {
 
         default:
             throw new Error(
-                `Invalid promote selection: ${order.promote_selection}`
+                `Invalid promote selection: ${promote_selection}`
             );
     }
 }
