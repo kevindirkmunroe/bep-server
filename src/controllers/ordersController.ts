@@ -42,7 +42,6 @@ export const updateOrder= async( req: Request, resp: Response) => {
             `,
             [ promote_selection, payment_completed_at, order_fulfilled_at, orderId ]
         );
-        console.log(`[ordersController] updated order to ${JSON.stringify(result.rows[0])}`);
         return resp.status(201).json(result.rows[0]);
     }catch(err){
         console.error(err);
@@ -52,7 +51,6 @@ export const updateOrder= async( req: Request, resp: Response) => {
 
 export const getOrderForEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
-    console.log(`[OrdersController] getOrderForEvent eventId= ${eventId}`);
     const result = await pool.query(
         `
         SELECT *

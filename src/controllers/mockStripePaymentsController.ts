@@ -18,7 +18,7 @@ function getOrderCost(promote_selection: string): number {
 }
 
 export const checkout= async( req: Request, resp: Response) => {
-    const { order } = req.body;
+    const { eventOrder } = req.body;
     try{
         let paymentResult = await pool.query(
             `
@@ -27,7 +27,7 @@ export const checkout= async( req: Request, resp: Response) => {
             WHERE order_id = $1
             LIMIT 1
             `,
-            [order.order_id]
+            [eventOrder.order_id]
         );
 
         let payment = paymentResult.rows[0];
@@ -49,10 +49,10 @@ export const checkout= async( req: Request, resp: Response) => {
                 RETURNING *
                 `,
                 [
-                    order.order_id,
+                    eventOrder.order_id,
                     checkoutSessionId,
                     paymentIntentId,
-                    getOrderCost(order.promote_selection),
+                    getOrderCost(eventOrder.promote_selection),
                     "succeeded"
                 ]
             );
