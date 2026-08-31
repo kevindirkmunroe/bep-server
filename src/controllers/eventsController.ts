@@ -127,7 +127,7 @@ export const createUserEvent= async( req: Request, resp: Response) => {
         const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
                                        image_url, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     RETURNING event_id
             `,
             [userId, title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, ts, ts, name, email, zip, category, imported_from, organization, website]
@@ -341,6 +341,37 @@ export const deleteUserEvent= async( req: Request, resp: Response) => {
     }
 }
 
+export const getEventPromoteSelection = async( req: Request, resp: Response) => {
+    const eventId = req.params.eventId;
+    if (!eventId) {
+        return resp.status(400).json({
+            "error": "event id is required"
+        });
+    }
+
+    const query = `
+        SELECT
+            e.event_id,
+            e.promote_selection
+        FROM events e
+        WHERE e.event_id = $1
+    `
+    const result = await pool.query(query, [
+        eventId
+    ]);
+
+    if (result.rows.length === 0) {
+        return resp.status(404).json({
+            error: `No events found for event id: ${eventId}`,
+        });
+    }
+
+    return resp.status(200).json({
+        eventId: eventId,
+        promoteSelection: result.rows[0].promote_selection
+    });
+}
+
 export const getUserEvents = async( req: Request, resp: Response) => {
     const userId = req.params.userId;
     if(!userId){
@@ -367,7 +398,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.phone,
             e.category,
             e.zip,
-            e.imported_from
+            e.imported_from,
             COALESCE(
                     json_agg(
                             json_build_object(

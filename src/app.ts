@@ -10,7 +10,7 @@ import {
     restoreUserEvent,
     updateUserEvent,
     importUserEventFromFacebook,
-    importUserEventFromEventbrite
+    importUserEventFromEventbrite, getEventPromoteSelection
 } from "./controllers/eventsController";
 
 import {
@@ -32,10 +32,17 @@ import {
     updatePublishedEventStatus,
     updatePublishedEvent
 } from "./controllers/publishedEventsController";
+
+import {
+    checkout
+} from "./controllers/paymentsController";
+
 import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
 import { loginLimiter, promoteLimiter, registerLimiter } from "./limiters";
 import { requireAuth } from "./auth";
 import pool from "./db";
+
+import {createOrder, getOrderForEvent, updateOrder} from "./controllers/ordersController";
 
 const app = express();
 
@@ -132,6 +139,12 @@ app.patch("/events/:eventId", requireAuth, updatePublishedEventStatus);
 app.patch("/events/:eventId/platforms/:platform", requireAuth, updatePublishedEvent);
 app.get("/events/:eventId/platforms/:platform", requireAuth, getPublishedEvent);
 app.get("/events/:eventId", requireAuth, getPublishedEvents);
+
+app.post("/orders/create", requireAuth, createOrder);
+app.put("/orders/:orderId", requireAuth, updateOrder);
+app.get("/orders/:eventId", requireAuth, getOrderForEvent);
+
+app.post("/payments/stripe/checkout", requireAuth, checkout);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);
