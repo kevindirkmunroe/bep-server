@@ -50,7 +50,9 @@ const allowedOrigins = [
     "http://localhost:4150",
     "http://localhost:5173",
     "https://localbuzz-events-feed.onrender.com",
-    process.env.FRONTEND_URL
+    process.env.FRONTEND_URL,
+    "https://bep-ui.onrender.com",
+    "https://app.airhorn.events"
 ];
 
 app.use(cors({
