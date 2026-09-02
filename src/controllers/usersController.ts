@@ -9,8 +9,7 @@ import { MailProvider } from "../mailers/MailProvider";
 const mailer = MailProvider.getMailer();
 
 export const requestInvite = async (req: Request, resp: Response) => {
-    const { name, email, company, use_case} = req.body;
-
+    const { name, email, company, use_case, invite_code} = req.body;
     // dedup requests
     try{
         const result = await pool.query(`
@@ -26,9 +25,9 @@ export const requestInvite = async (req: Request, resp: Response) => {
 
     try {
         const result = await pool.query(`
-            INSERT into invite_requests (name, email, company, use_case)
-            VALUES ($1, $2, $3, $4)
-        `, [name, email, company, use_case]);
+            INSERT into invite_requests (name, email, company, use_case, invite_code)
+            VALUES ($1, $2, $3, $4, $5)
+        `, [name, email, company, use_case, invite_code]);
 
         if(result.rowCount === 0){
             return resp.status(500).json({ error: "Failed to create Invite request" });
@@ -43,6 +42,46 @@ export const requestInvite = async (req: Request, resp: Response) => {
     }catch(err){
         console.error(err);
         return resp.status(500).json({ error: "Failed to create Invite request" });
+    }
+}
+
+export const approveInviteRequest = async ( req: Request, resp: Response) => {
+    const {
+        request_id,
+        name,
+        email,
+        invite_code
+    } = req.body;
+
+    try {
+
+        await pool.query(
+            `
+            UPDATE invite_requests
+            SET status = 'approved'
+            WHERE request_id = $1
+            `,
+            [request_id]
+        );
+
+        //
+        // Existing user approval logic here.
+        // Send invitation email, create user, etc.
+        //
+        await mailer.send(email, "Your Invite request was APPROVED 🎉",
+            `Dear ${name.split(' ')[0]},<br/><p>You can now register on Airhorn.events at https://app.airhorn.events/register. Your Invite Code is ${invite_code}.<br/><p><br/><br/><strong>Make Some Noise!</strong></p><br/>The Airhorn.events Team</p>`);
+
+        resp.json({
+            ok: true
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        resp.status(500).json({
+            error: "Unable to approve invite request"
+        });
     }
 }
 

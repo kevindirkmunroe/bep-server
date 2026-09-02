@@ -10,7 +10,7 @@ import {
     restoreUserEvent,
     updateUserEvent,
     importUserEventFromFacebook,
-    importUserEventFromEventbrite, getEventPromoteSelection
+    importUserEventFromEventbrite,
 } from "./controllers/eventsController";
 
 import {
@@ -23,7 +23,8 @@ import {
     logoutUser,
     changeUserPassword,
     validateUser,
-    requestInvite
+    requestInvite,
+    approveInviteRequest
 } from "./controllers/usersController";
 
 import {
@@ -43,6 +44,7 @@ import { requireAuth } from "./auth";
 import pool from "./db";
 
 import {createOrder, getOrderForEvent, updateOrder} from "./controllers/ordersController";
+import {getInviteRequests} from "./controllers/adminController";
 
 const app = express();
 
@@ -120,6 +122,7 @@ if (process.env.NODE_ENV !== "development") {
 // API
 app.get("/users/validate", validateUser);
 app.post("/users/invite", requestInvite);
+app.post("/users/approve", approveInviteRequest);
 app.post("/users/login", loginUser);
 app.post("/users/logout", logoutUser);
 app.post("/users/forgotpassword", forgotPassword);
@@ -147,6 +150,8 @@ app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
 
 app.post("/payments/stripe/checkout", requireAuth, checkout);
+
+app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);

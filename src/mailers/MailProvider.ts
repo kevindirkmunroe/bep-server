@@ -1,6 +1,7 @@
 import { Mailer } from "./Mailer";
 import { GmailMailer } from "./GmailMailer";
 import { ResendMailer } from "./ResendMailer";
+import {MailpitMailer} from "./MailpitMailer";
 
 export class MailProvider {
     private static mailer: Mailer;
@@ -14,17 +15,14 @@ export class MailProvider {
     }
 
     private static createMailer(): Mailer {
-        if (
-            process.env.GMAIL_USER &&
-            process.env.GMAIL_APP_PASSWORD
-        ) {
-            console.log("Using Gmail mailer");
-            return new GmailMailer();
-        }
 
-        if (process.env.RESEND_API_KEY) {
-            console.log("Using Resend mailer");
-            return new ResendMailer();
+        const mailer: Mailer =
+            process.env.NODE_ENV === "production" && process.env.RESEND_API_KEY
+                ? new ResendMailer()
+                : new MailpitMailer();
+
+        if(mailer) {
+            return mailer;
         }
 
         throw new Error(
