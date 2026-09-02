@@ -36,7 +36,7 @@ import {
 
 import {
     checkout
-} from "./controllers/mockStripePaymentsController";
+} from "./controllers/stripePaymentsController";
 
 import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
 import { loginLimiter, promoteLimiter, registerLimiter } from "./limiters";

@@ -23,7 +23,8 @@
     "nodemailer": "^8.0.8",
     "password-generator": "^3.0.0",
     "pg": "^8.20.0",
-    "resend": "^6.12.3"
+    "resend": "^6.12.3",
+    "stripe": "^22.6.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
