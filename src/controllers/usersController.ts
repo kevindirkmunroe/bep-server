@@ -240,10 +240,9 @@ export const changeUserPassword = async (req: Request, resp: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
     const { username, password } = req.body;
-    console.log(`Login: user ${username} password ${password}`);
     try {
         const result = await pool.query(
-            "SELECT user_id, first_name, company, password_hash FROM users WHERE username = $1",
+            "SELECT user_id, first_name, email, company, password_hash FROM users WHERE username = $1",
             [username]
         );
 
@@ -288,12 +287,15 @@ export const loginUser = async (req: Request, res: Response) => {
             userId: user.user_id,
             username: user.username,
             firstName: user.first_name,
+            email: user.email,
             company: user.company
         };
 
         return res.json({
             userId: user.user_id,
+            username: user.username,
             firstName: user.first_name,
+            email: user.email,
             company: user.company
         });
     } catch (err) {

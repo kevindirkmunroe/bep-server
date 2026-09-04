@@ -44,7 +44,7 @@ import { requireAuth } from "./auth";
 import pool from "./db";
 
 import {createOrder, getOrderForEvent, updateOrder} from "./controllers/ordersController";
-import {getInviteRequests} from "./controllers/adminController";
+import {fulfillProOrder, getInviteRequests, getProOrders} from "./controllers/adminController";
 
 const app = express();
 
@@ -152,6 +152,8 @@ app.get("/orders/:eventId", requireAuth, getOrderForEvent);
 app.post("/payments/stripe/checkout", requireAuth, checkout);
 
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
+app.get("/admin/pro-orders", requireAuth, getProOrders);
+app.put("/admin/fulfill-order", requireAuth, fulfillProOrder);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);
