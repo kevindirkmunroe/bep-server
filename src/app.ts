@@ -10,7 +10,7 @@ import {
     restoreUserEvent,
     updateUserEvent,
     importUserEventFromFacebook,
-    importUserEventFromEventbrite,
+    importUserEventFromEventbrite, createImage,
 } from "./controllers/eventsController";
 
 import {
@@ -148,6 +148,7 @@ app.get("/events/:eventId", requireAuth, getPublishedEvents);
 app.post("/orders/create", requireAuth, createOrder);
 app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
+app.post("/events/image", requireAuth, createImage);
 
 app.post("/payments/stripe/checkout", requireAuth, checkout);
 

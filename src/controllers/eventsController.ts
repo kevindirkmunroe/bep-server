@@ -112,6 +112,14 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
     }
 }
 
+export const createImage= async( req: Request, resp: Response) => {
+
+    const imageUrl = req.body;
+    return resp.status(201).json({
+        imageUrl: "https://scontent-sjc6-1.xx.fbcdn.net/v/t39.30808-6/787880524_10163687508053789_3861347131017349539_n.jpg?stp=dst-jpg_tt6&cstp=mx1086x1448&ctp=s1086x1448&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_ohc=xfQSMKVsnFwQ7kNvwHezm4P&_nc_oc=AdoXt0adQftZe66rGGW30hIFKYr6C2gE-CbLquNeHiKxTIC7_YuQXMGJLGzpQIhpEro&_nc_zt=23&_nc_ht=scontent-sjc6-1.xx&_nc_gid=0rE45ATewzK73XIbHdqJwQ&_nc_ss=7b2a8&oh=00_AQK5xLoxHF9JgbAr3Y_o4Ygo_CNFBU13Kch3jZ78_ZBpQg&oe=6AA1AC17"
+    });
+}
+
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;
