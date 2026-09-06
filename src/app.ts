@@ -10,7 +10,7 @@ import {
     restoreUserEvent,
     updateUserEvent,
     importUserEventFromFacebook,
-    importUserEventFromEventbrite, createImage,
+    importUserEventFromEventbrite, getS3UploadUrl,
 } from "./controllers/eventsController";
 
 import {
@@ -144,12 +144,12 @@ app.patch("/events/:eventId", requireAuth, updatePublishedEventStatus);
 app.patch("/events/:eventId/platforms/:platform", requireAuth, updatePublishedEvent);
 app.get("/events/:eventId/platforms/:platform", requireAuth, getPublishedEvent);
 app.get("/events/:eventId", requireAuth, getPublishedEvents);
+app.post("/events/upload-url", requireAuth, getS3UploadUrl);
+
 
 app.post("/orders/create", requireAuth, createOrder);
 app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
-app.post("/events/image", requireAuth, createImage);
-
 app.post("/payments/stripe/checkout", requireAuth, checkout);
 
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);

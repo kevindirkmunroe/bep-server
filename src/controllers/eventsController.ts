@@ -1,7 +1,33 @@
 import { Request, Response } from "express";
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v4 as uuidv4 } from 'uuid';
+
 import pool from '../db';
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay"];
+
+const {
+    AWS_REGION,
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY
+} = process.env;
+
+if (
+    !AWS_REGION ||
+    !AWS_ACCESS_KEY_ID ||
+    !AWS_SECRET_ACCESS_KEY
+) {
+    throw new Error("Missing AWS S3 environment configuration");
+}
+// Initialize the Amazon S3 Client using SDK v3
+const s3Client = new S3Client({
+    region: AWS_REGION,
+    credentials: {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    },
+});
 
 export const importUserEventFromFacebook = async( req: Request, resp: Response) => {
         const { facebookEventUrl } = req.body || {};
@@ -50,7 +76,7 @@ export const importUserEventFromFacebook = async( req: Request, resp: Response) 
             location_name: fbEvent.location?.name || fbEvent.place?.name || "",
             address: fbEvent.location?.address || fbEvent.address || "",
             website: facebookEventUrl,
-            image_url: fbEvent.image || fbEvent.coverPhoto || ""
+            image: fbEvent.image || fbEvent.coverPhoto || ""
         };
 
     resp.json({ data: importedEvent, raw: fbEvent });
@@ -112,18 +138,10 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
     }
 }
 
-export const createImage= async( req: Request, resp: Response) => {
-
-    const imageUrl = req.body;
-    return resp.status(201).json({
-        imageUrl: "https://scontent-sjc6-1.xx.fbcdn.net/v/t39.30808-6/787880524_10163687508053789_3861347131017349539_n.jpg?stp=dst-jpg_tt6&cstp=mx1086x1448&ctp=s1086x1448&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_ohc=xfQSMKVsnFwQ7kNvwHezm4P&_nc_oc=AdoXt0adQftZe66rGGW30hIFKYr6C2gE-CbLquNeHiKxTIC7_YuQXMGJLGzpQIhpEro&_nc_zt=23&_nc_ht=scontent-sjc6-1.xx&_nc_gid=0rE45ATewzK73XIbHdqJwQ&_nc_ss=7b2a8&oh=00_AQK5xLoxHF9JgbAr3Y_o4Ygo_CNFBU13Kch3jZ78_ZBpQg&oe=6AA1AC17"
-    });
-}
-
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;
-    const { title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, name, email, zip, category, imported_from, organization, website} = req.body;
+    const { title, description, start_datetime, end_datetime, location_name, address, price, image, tags, name, email, zip, category, imported_from, organization, website} = req.body;
     const client = await pool.connect();
 
     // Transaction creates event and published event...
@@ -134,11 +152,11 @@ export const createUserEvent= async( req: Request, resp: Response) => {
     try {
         const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
-                                       image_url, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website)
+                                       image, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     RETURNING event_id
             `,
-            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image_url, tags, ts, ts, name, email, zip, category, imported_from, organization, website]
+            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image, tags, ts, ts, name, email, zip, category, imported_from, organization, website]
         );
 
         const event_id = result.rows[0].event_id;
@@ -188,7 +206,7 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 category,
                 created_at,
                 updated_at,
-                image_url,
+                image,
                 tags,
                 name,
                 email,
@@ -209,7 +227,7 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 category,
                 NOW(),
                 NOW(),
-                image_url,
+                image,
                 tags,
                 name,
                 email,
@@ -349,37 +367,6 @@ export const deleteUserEvent= async( req: Request, resp: Response) => {
     }
 }
 
-export const getEventPromoteSelection = async( req: Request, resp: Response) => {
-    const eventId = req.params.eventId;
-    if (!eventId) {
-        return resp.status(400).json({
-            "error": "event id is required"
-        });
-    }
-
-    const query = `
-        SELECT
-            e.event_id,
-            e.promote_selection
-        FROM events e
-        WHERE e.event_id = $1
-    `
-    const result = await pool.query(query, [
-        eventId
-    ]);
-
-    if (result.rows.length === 0) {
-        return resp.status(404).json({
-            error: `No events found for event id: ${eventId}`,
-        });
-    }
-
-    return resp.status(200).json({
-        eventId: eventId,
-        promoteSelection: result.rows[0].promote_selection
-    });
-}
-
 export const getUserEvents = async( req: Request, resp: Response) => {
     const userId = req.params.userId;
     if(!userId){
@@ -398,7 +385,8 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.location_name,
             e.address,
             e.price,
-            e.image_url,
+            e.image,
+            e.image_title,
             e.name,
             e.website,
             e.email,
@@ -429,7 +417,6 @@ export const getUserEvents = async( req: Request, resp: Response) => {
         userId
     ]);
 
-
     if (result.rows.length === 0) {
         return resp.status(404).json({
             error: `No events found for user id: ${userId}`,
@@ -442,3 +429,56 @@ export const getUserEvents = async( req: Request, resp: Response) => {
         data: result.rows,
     });
 };
+
+/**
+ * @route   POST /events/upload-url
+ * @desc    Generate a presigned S3 URL to directly upload an event image
+ */
+export const getS3UploadUrl = async (req: Request, resp: Response) => {
+    try {
+        const { filename, contentType } = req.body;
+
+        // 1. Validate that input fields exist
+        if (!filename || !contentType) {
+            return resp.status(400).json({
+                message: 'Missing required payload parameters: filename and contentType are required.'
+            });
+        }
+
+        // 2. Security Check: Restrict file types strictly to standard images
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedMimeTypes.includes(contentType)) {
+            return resp.status(400).json({
+                message: 'Invalid file type. Only JPEG, PNG, WEBP, and GIF images are allowed.'
+            });
+        }
+
+        // 3. Extract file extension safely and generate a unique key
+        const fileExtension = filename.split('.').pop();
+        const uniqueKey = `events/${uuidv4()}.${fileExtension}`;
+
+        // 4. Set up S3 Command Configuration
+        const commandParams = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: uniqueKey,
+            ContentType: contentType, // Must match frontend axios header exactly
+        };
+
+        const command = new PutObjectCommand(commandParams);
+
+        // 5. Generate a presigned URL valid for 5 minutes (300 seconds)
+        const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+        // 6. Return response matching your frontend destructuring pattern
+        return resp.status(200).json({
+            url: presignedUrl,
+            key: uniqueKey,
+        });
+
+    } catch (error) {
+        console.error('Error creating S3 presigned URL:', error);
+        return resp.status(500).json({
+            message: 'Internal server error while generating upload credentials.'
+        });
+    }
+}
