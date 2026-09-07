@@ -24,8 +24,9 @@ export const getInviteRequests = async (req: Request, resp: Response) => {
 export const getProOrders = async (req: Request, resp: Response) => {
     try {
         const result = await pool.query(`
-            SELECT *
-            FROM promote_orders
+            SELECT p.*, e.image
+            FROM promote_orders p
+                     left join events e on e.event_id = p.event_id
             WHERE promote_selection  = 'PRO'
             ORDER BY created_at ASC
         `);

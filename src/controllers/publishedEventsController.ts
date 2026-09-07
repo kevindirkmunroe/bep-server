@@ -100,7 +100,7 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
                                 e.location_name,
                                 e.address,
                                 e.price,
-                                e.image_url,
+                                e.image,
                                 e.name,
                                 e.website,
                                 e.email,
