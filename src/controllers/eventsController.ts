@@ -386,7 +386,6 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.address,
             e.price,
             e.image,
-            e.image_title,
             e.name,
             e.website,
             e.email,
