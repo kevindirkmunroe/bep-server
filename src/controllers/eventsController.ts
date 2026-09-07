@@ -10,13 +10,15 @@ const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay
 const {
     AWS_REGION,
     AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY
+    AWS_SECRET_ACCESS_KEY,
+    AWS_S3_BUCKET
 } = process.env;
 
 if (
     !AWS_REGION ||
     !AWS_ACCESS_KEY_ID ||
-    !AWS_SECRET_ACCESS_KEY
+    !AWS_SECRET_ACCESS_KEY ||
+    !AWS_S3_BUCKET
 ) {
     throw new Error("Missing AWS S3 environment configuration");
 }
