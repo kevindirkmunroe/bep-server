@@ -11,14 +11,14 @@ const {
     AWS_REGION,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    AWS_S3_BUCKET
+    AWS_BUCKET_NAME
 } = process.env;
 
 if (
     !AWS_REGION ||
     !AWS_ACCESS_KEY_ID ||
     !AWS_SECRET_ACCESS_KEY ||
-    !AWS_S3_BUCKET
+    !AWS_BUCKET_NAME
 ) {
     throw new Error("Missing AWS S3 environment configuration");
 }
