@@ -35,7 +35,7 @@ import {
 } from "./controllers/publishedEventsController";
 
 import {
-    checkout
+    checkout, verifyPayment
 } from "./controllers/stripePaymentsController";
 
 import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
@@ -151,6 +151,7 @@ app.post("/orders/create", requireAuth, createOrder);
 app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
 app.post("/payments/stripe/checkout", requireAuth, checkout);
+app.post("/payments/stripe/verify-payment", requireAuth, verifyPayment);
 
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 app.get("/admin/pro-orders", requireAuth, getProOrders);
