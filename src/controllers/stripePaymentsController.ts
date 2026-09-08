@@ -11,9 +11,9 @@ export const checkout = async( req: Request, resp: Response) => {
 
         const amount =
             promote_selection === "DIY"
-                ? 150
+                ? 1995
                 : promote_selection === "PRO"
-                    ? 100
+                    ? 1495
                     : null;
 
         if (!amount) {
