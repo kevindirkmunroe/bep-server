@@ -20,6 +20,7 @@ export const requestInvite = async (req: Request, resp: Response) => {
             return resp.status(400).json({ error: "Invite request already received for this user" });
         }
     }catch(err){
+        console.log(`[userController] error 1: ${err}`)
         return resp.status(500).json({ error: "Failed to create Invite request" });
     }
 
@@ -40,7 +41,8 @@ export const requestInvite = async (req: Request, resp: Response) => {
 
         return resp.status(200).json({message: "Invite successfully created!"});
     }catch(err){
-        console.error(err);
+        console.log(`[userController] error 2: ${err}`)
+
         return resp.status(500).json({ error: "Failed to create Invite request" });
     }
 }
@@ -360,27 +362,33 @@ export const validateUser = async (req: Request, res: Response) => {
         }
 
         // 🔹 5. Check invite code for email exists AND registrant passed matching code
-        const inviteCodeResult = await pool.query(
-            "SELECT invite_code FROM invite_requests WHERE email = $1 AND status = 'approved'",
-            [email]
-        );
-        if(inviteCodeResult.rows.length === 0){
-            console.log(`[UserController] ${email} has no invite code`);
-            return res.json({
-                valid: false,
-                reason: "invalid_invite_code",
-                message: "Invalid Invite code"
-            });
+        const isBeta = process.env.APP_MODE_BETA;
+        if(isBeta){
+            console.log("Mode is BETA, skipping Invite approval check.");
         }
+        if(!isBeta){
+            const inviteCodeResult = await pool.query(
+                "SELECT invite_code FROM invite_requests WHERE email = $1 AND status = 'approved'",
+                [email]
+            );
+            if(inviteCodeResult.rows.length === 0){
+                console.log(`[UserController] ${email} has no invite code`);
+                return res.json({
+                    valid: false,
+                    reason: "invite_not_approved",
+                    message: "Invite not yet approved. Please contact info@airhorn.events."
+                });
+            }
 
-        console.log(`user sent ${invite_code}, got ${inviteCodeResult.rows[0].invite_code}`);
-        if(inviteCodeResult.rows[0].invite_code !== invite_code){
-            console.log(`[UserController] ${email} invite code does not match`);
-            return res.json({
-                valid: false,
-                reason: "invalid_invite_code",
-                message: "Invalid Invite code"
-            });
+            console.log(`user sent ${invite_code}, got ${inviteCodeResult.rows[0].invite_code}`);
+            if(inviteCodeResult.rows[0].invite_code !== invite_code){
+                console.log(`[UserController] ${email} invite code does not match`);
+                return res.json({
+                    valid: false,
+                    reason: "invalid_invite_code",
+                    message: "Invalid Invite code"
+                });
+            }
         }
 
         // ✅ All good
