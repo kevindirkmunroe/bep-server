@@ -2,18 +2,67 @@ import { Request, Response } from "express";
 
 import Stripe from "stripe";
 import pool from "../db";
+import StripeConstructor from "stripe";
+import Session = StripeConstructor.Checkout.Session;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
+const createStripePaymentRecord = async (order_id: string, amount: number, session: Session) => {
+    try {
+        let paymentResult = await pool.query(
+            `
+                SELECT *
+                FROM stripe_payments
+                WHERE order_id = $1 LIMIT 1
+            `,
+            [order_id]
+        );
+
+        let payment = paymentResult.rows[0];
+
+        if (!payment) {
+            // Stripe attribute AVAILABLE NOW
+            const checkoutSessionId = session.id;
+
+            // Stripe attribute may be null at this stage
+            const paymentIntentId =
+                typeof session.payment_intent === "string"
+                    ? session.payment_intent
+                    : session.payment_intent?.id ?? null;
+
+            paymentResult = await pool.query(
+                `
+                    INSERT INTO stripe_payments (order_id,
+                                                 checkout_session_id,
+                                                 payment_intent_id,
+                                                 order_cost,
+                                                 payment_status)
+                    VALUES ($1, $2, $3, $4, $5)
+                `,
+                [
+                    order_id,
+                    checkoutSessionId,
+                    paymentIntentId,
+                    amount,
+                    "processing"
+                ]
+            );
+        }
+    }catch(err){
+        console.log(`[stripePaymentsController] ERROR creating stripe record: ${err}`);
+    }
+}
+
 export const checkout = async( req: Request, resp: Response) => {
+    console.log(`[stripePaymentsController] checkout BEGIN`);
+
     try {
         const { order_id, promote_selection } = req.body;
-
         const amount =
             promote_selection === "DIY"
                 ? 1995
                 : promote_selection === "PRO"
-                    ? 1495
+                    ? 995
                     : null;
 
         if (!amount) {
@@ -53,6 +102,7 @@ export const checkout = async( req: Request, resp: Response) => {
             }
         });
 
+        await createStripePaymentRecord(order_id, amount, session);
         resp.json({
             url: session.url
         });
@@ -89,7 +139,7 @@ export const verifyPayment = async( req: Request, resp: Response) => {
             });
         }
 
-        await client.query(
+        const stripeUpdates= await client.query(
             `
             UPDATE stripe_payments
             SET payment_status = 'succeeded',
@@ -103,7 +153,7 @@ export const verifyPayment = async( req: Request, resp: Response) => {
             ]
         );
 
-        await client.query(
+        const orderUpdates = await client.query(
             `
             UPDATE promote_orders
             SET payment_completed_at = COALESCE(
@@ -114,6 +164,7 @@ export const verifyPayment = async( req: Request, resp: Response) => {
             `,
             [orderId]
         );
+        await client.query("COMMIT");
 
         resp.json({
             ok: true,
@@ -122,6 +173,7 @@ export const verifyPayment = async( req: Request, resp: Response) => {
 
     } catch (err) {
         console.error(err);
+        await client.query('ROLLBACK');
 
         resp.status(500).json({
             error: "Unable to verify Stripe payment"

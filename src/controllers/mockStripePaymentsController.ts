@@ -8,7 +8,7 @@ function getOrderCost(promote_selection: string): number {
             return 1995;
 
         case "PRO":
-            return 1495;
+            return 995;
 
         default:
             throw new Error(
