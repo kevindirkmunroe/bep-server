@@ -382,8 +382,8 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.event_id,
             e.title,
             e.description,
-            TO_CHAR(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
-            TO_CHAR(end_datetime, 'YYYY-MM-DD HH24:MI:SS') AS end_datetime,
+            TO_CHAR(e.start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
+            TO_CHAR(e.end_datetime, 'YYYY-MM-DD HH24:MI:SS') AS end_datetime,
             e.location_name,
             e.address,
             e.price,
@@ -391,11 +391,12 @@ export const getUserEvents = async( req: Request, resp: Response) => {
             e.name,
             e.website,
             e.email,
-            e.organization, 
+            e.organization,
             e.phone,
             e.category,
             e.zip,
             e.imported_from,
+
             COALESCE(
                     json_agg(
                             json_build_object(
@@ -406,13 +407,25 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                                 )
                         ) FILTER (WHERE p.platform IS NOT NULL),
                     '[]'
-                ) AS platforms
+                ) AS platforms,
+
+            (o.payment_completed_at IS NOT NULL) AS is_locked
+
         FROM events e
+
                  LEFT JOIN published_events p
                            ON e.event_id = p.event_id
+
+                 LEFT JOIN promote_orders o
+                           ON o.event_id = e.event_id
+
         WHERE e.user_id = $1
-        GROUP BY e.event_id
-        ORDER BY e.start_datetime DESC
+
+        GROUP BY
+            e.event_id,
+            o.payment_completed_at
+
+        ORDER BY e.start_datetime DESC;
     `
     const result = await pool.query(query, [
         userId
