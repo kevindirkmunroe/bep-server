@@ -8,6 +8,16 @@ import { MailProvider } from "../mailers/MailProvider";
 
 const mailer = MailProvider.getMailer();
 
+const {
+    INVITE_CODE
+} = process.env;
+
+if (
+    !INVITE_CODE
+) {
+    throw new Error("Missing Invite Code environment configuration");
+}
+
 export const requestInvite = async (req: Request, resp: Response) => {
     const { name, email, company, use_case, invite_code} = req.body;
     // dedup requests
@@ -365,6 +375,16 @@ export const validateUser = async (req: Request, res: Response) => {
         const isBeta = process.env.APP_MODE_BETA;
         if(isBeta){
             console.log("Mode is BETA, skipping Invite approval check.");
+            const currInviteCode = process.env.INVITE_CODE;
+            console.log(`user sent ${invite_code}, got ${currInviteCode}`);
+            if(currInviteCode !== invite_code){
+                console.log(`[UserController] ${email} invite code does not match`);
+                return res.json({
+                    valid: false,
+                    reason: "invalid_invite_code",
+                    message: "Invalid Invite code"
+                });
+            }
         }
         if(!isBeta){
             const inviteCodeResult = await pool.query(
