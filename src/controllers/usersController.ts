@@ -294,13 +294,18 @@ export const loginUser = async (req: Request, res: Response) => {
             [user.user_id]
         );
 
+        // mark as admin if in list
+        const adminList = process.env.ADMIN_EMAIL_LIST ? process.env.ADMIN_EMAIL_LIST.split(',') : [];
+        console.log(`[usersController] adminList= ${JSON.stringify(adminList)}`);
+
         // Store session
         (req.session as any).user = {
             userId: user.user_id,
             username: user.username,
             firstName: user.first_name,
             email: user.email,
-            company: user.company
+            company: user.company,
+            isAdmin: adminList.includes(user.email),
         };
 
         return res.json({
@@ -308,7 +313,8 @@ export const loginUser = async (req: Request, res: Response) => {
             username: user.username,
             firstName: user.first_name,
             email: user.email,
-            company: user.company
+            company: user.company,
+            isAdmin: adminList.includes(user.email),
         });
     } catch (err) {
         console.error("[loginUser]", err);
