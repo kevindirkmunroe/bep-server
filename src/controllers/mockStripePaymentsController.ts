@@ -58,6 +58,18 @@ export const checkout= async( req: Request, resp: Response) => {
             );
 
             payment = paymentResult.rows[0];
+
+            const orderUpdates = await pool.query(
+                `
+            UPDATE promote_orders
+            SET payment_completed_at = COALESCE(
+                payment_completed_at,
+                NOW()
+            )
+            WHERE order_id = $1
+            `,
+                [eventOrder.order_id]
+            );
         }
 
         return resp.status(201).json({
