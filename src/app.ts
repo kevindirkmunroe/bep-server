@@ -9,7 +9,8 @@ import {
     getUserEvents,
     updateUserEvent,
     importUserEventFromFacebook,
-    importUserEventFromEventbrite, getS3UploadUrl,
+    importUserEventFromEventbrite,
+    getS3UploadUrl,
 } from "./controllers/eventsController";
 
 import {
@@ -34,16 +35,39 @@ import {
 } from "./controllers/publishedEventsController";
 
 import {
-    checkout, verifyPayment
+    checkout,
+    verifyPayment
 } from "./controllers/stripePaymentsController";
 
-import {mapZipToCity, mapZipToRegion} from "./controllers/mappingController";
-import { loginLimiter, promoteLimiter, registerLimiter } from "./limiters";
-import { requireAuth } from "./auth";
+import {
+    mapZipToCity,
+    mapZipToRegion
+} from "./controllers/mappingController";
+
+import {
+    loginLimiter,
+    promoteLimiter,
+    registerLimiter
+} from "./limiters";
+
+import {
+    requireAuth
+} from "./auth";
+
 import pool from "./db";
 
-import {createOrder, getOrderForEvent, updateOrder} from "./controllers/ordersController";
-import {fulfillProOrder, getInviteRequests, getProOrders} from "./controllers/adminController";
+import {
+    createOrder,
+    getOrderForEvent,
+    updateOrder
+} from "./controllers/ordersController";
+
+import {
+    fulfillProOrder,
+    getInviteRequests,
+    getProOrders,
+    updateFulfillmentLog
+} from "./controllers/adminController";
 
 const app = express();
 
@@ -154,6 +178,7 @@ app.post("/payments/stripe/verify-payment", requireAuth, verifyPayment);
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 app.get("/admin/pro-orders", requireAuth, getProOrders);
 app.put("/admin/fulfill-order", requireAuth, fulfillProOrder);
+app.put("/admin/update-fulfillment-log", requireAuth, updateFulfillmentLog);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);

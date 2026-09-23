@@ -61,3 +61,28 @@ export const fulfillProOrder = async (req: Request, resp: Response) => {
         });
     }
 }
+
+export const updateFulfillmentLog = async (req: Request, resp: Response) => {
+    const {order_id, worker_user_id} = req.body;
+    try {
+        const result = await pool.query(`
+            INSERT INTO fulfillment_log (
+                order_id,
+                worker_user_id
+            )
+            VALUES ($1, $2)
+                ON CONFLICT (order_id, worker_user_id)
+                DO UPDATE SET
+                last_updated_at = NOW();
+        `,
+            [order_id, worker_user_id]);
+        resp.json(result.rows);
+
+    } catch (error) {
+
+        console.error(error);
+        resp.status(500).json({
+            error: "Unable to update fulfillment log"
+        });
+    }
+}
