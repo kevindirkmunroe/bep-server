@@ -40,6 +40,11 @@ import {
 } from "./controllers/stripePaymentsController";
 
 import {
+    mockCheckout,
+    mockVerifyPayment
+} from "./controllers/mockStripePaymentsController";
+
+import {
     mapZipToCity,
     mapZipToRegion
 } from "./controllers/mappingController";
@@ -172,8 +177,13 @@ app.post("/events/upload-url", requireAuth, getS3UploadUrl);
 app.post("/orders/create", requireAuth, createOrder);
 app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
-app.post("/payments/stripe/checkout", requireAuth, checkout);
-app.post("/payments/stripe/verify-payment", requireAuth, verifyPayment);
+if(process.env.APP_MODE_BETA === 'true'){
+    app.post("/payments/stripe/checkout", requireAuth, mockCheckout);
+    app.post("/payments/stripe/verify-payment", requireAuth, mockVerifyPayment);
+}else{
+    app.post("/payments/stripe/checkout", requireAuth, checkout);
+    app.post("/payments/stripe/verify-payment", requireAuth, verifyPayment);
+}
 
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 app.get("/admin/pro-orders", requireAuth, getProOrders);

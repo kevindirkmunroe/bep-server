@@ -17,7 +17,13 @@ function getOrderCost(promote_selection: string): number {
     }
 }
 
-export const checkout= async( req: Request, resp: Response) => {
+export const mockVerifyPayment = async( req: Request, resp: Response) => {
+    resp.json({
+        ok: true
+    });
+}
+
+export const mockCheckout = async( req: Request, resp: Response) => {
     const { eventOrder } = req.body;
     try{
         let paymentResult = await pool.query(
