@@ -296,7 +296,6 @@ export const loginUser = async (req: Request, res: Response) => {
 
         // mark as admin if in list
         const adminList = process.env.ADMIN_EMAIL_LIST ? process.env.ADMIN_EMAIL_LIST.split(',') : [];
-        console.log(`[usersController] adminList= ${JSON.stringify(adminList)}`);
 
         // Store session
         (req.session as any).user = {

@@ -105,14 +105,15 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
             try {
                 const data = JSON.parse(match[1]);
 
-                if (data?.["@type"] === "Event") {
+                const EVENTBRITE_EVENT_TYPES = ["Event", "SocialEvent"];
+                if (EVENTBRITE_EVENT_TYPES.includes(data?.["@type"])){
                     eventJsonLd = data;
                     break;
                 }
 
                 if (Array.isArray(data)) {
                     const event = data.find(
-                        item => item?.["@type"] === "Event"
+                        item => item?.["@type"] === "Event" || item?.["@type"] === "SocialEvent"
                     );
 
                     if (event) {
