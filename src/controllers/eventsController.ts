@@ -144,7 +144,7 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
 export const createUserEvent= async( req: Request, resp: Response) => {
 
     const userId = req.params.userId;
-    const { title, description, start_datetime, end_datetime, location_name, address, price, image, tags, name, email, zip, category, imported_from, organization, website} = req.body;
+    const { title, description, start_datetime, end_datetime, location_name, address, price, image, tags, name, email, zip, category, imported_from, organization, website, phone} = req.body;
     const client = await pool.connect();
 
     // Transaction creates event and published event...
@@ -155,11 +155,11 @@ export const createUserEvent= async( req: Request, resp: Response) => {
     try {
         const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
-                                       image, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                                       image, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website, phone)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                     RETURNING event_id
             `,
-            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image, tags, ts, ts, name, email, zip, category, imported_from, organization, website]
+            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image, tags, ts, ts, name, email, zip, category, imported_from, organization, website, phone]
         );
 
         const event_id = result.rows[0].event_id;
@@ -174,8 +174,6 @@ export const createUserEvent= async( req: Request, resp: Response) => {
         }
 
         await client.query("COMMIT");
-        console.log("Event add complete ✅");
-
         resp.status(201).json({
             event_id: event_id
         })
