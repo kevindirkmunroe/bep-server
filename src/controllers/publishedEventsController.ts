@@ -112,7 +112,7 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
         );
 
         const platformRes = await client.query(
-            `SELECT platform, status, external_url, date_published
+            `SELECT platform, status, external_url, date_published, published_url
                FROM published_events
                WHERE event_id = $1
                ORDER BY platform`,

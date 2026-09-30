@@ -376,6 +376,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                                     'platform', p.platform,
                                     'status', p.status,
                                     'external_url', p.external_url,
+                                    'published_url', p.published_url,
                                     'date_published', p.date_published
                                 )
                         ) FILTER (WHERE p.platform IS NOT NULL),
