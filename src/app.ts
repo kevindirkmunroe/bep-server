@@ -29,9 +29,11 @@ import {
 
 import {
     getPublishedEvent,
-    getPublishedEvents,
+    getPublishedEventPlatforms,
     updatePublishedEventStatus,
-    updatePublishedEvent
+    updatePublishedEvent,
+    getEventURLFromTrackingCode,
+    getEventClickCount
 } from "./controllers/publishedEventsController";
 
 import {
@@ -170,8 +172,10 @@ app.get("/events/import/eventbrite", requireAuth, importUserEventFromEventbrite)
 app.patch("/events/:eventId", requireAuth, updatePublishedEventStatus);
 app.patch("/events/:eventId/platforms/:platform", requireAuth, updatePublishedEvent);
 app.get("/events/:eventId/platforms/:platform", requireAuth, getPublishedEvent);
-app.get("/events/:eventId", requireAuth, getPublishedEvents);
+app.get("/events/:eventId", requireAuth, getPublishedEventPlatforms);
 app.post("/events/upload-url", requireAuth, getS3UploadUrl);
+app.get("/r/:trackingCode", getEventURLFromTrackingCode);
+app.get("/r/:trackingCode/count", getEventClickCount);
 
 
 app.post("/orders/create", requireAuth, createOrder);

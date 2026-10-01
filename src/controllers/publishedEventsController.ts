@@ -23,6 +23,74 @@ export const updatePublishedEventStatus = async( req: Request, resp: Response) =
     }
 }
 
+export const getEventURLFromTrackingCode = async( req: Request, resp: Response) => {
+        const { trackingCode } = req.params;
+
+        const result = await pool.query(
+            `
+            SELECT
+                pe.published_event_id,
+                pe.external_url
+            FROM published_events pe
+            WHERE pe.tracking_code = $1
+        `,
+            [trackingCode]
+        );
+
+        console.log(`[publishedEventsController] code=${trackingCode} result=${JSON.stringify(result.rows[0])}`);
+        if (result.rowCount === 0) {
+            return resp.status(404).send("Link not found");
+        }
+
+        const {
+            published_event_id,
+            external_url
+        } = result.rows[0];
+
+        await pool.query(
+            `
+            INSERT INTO tracking_clicks (published_event_id)
+            VALUES ($1)
+        `,
+            [published_event_id]
+        );
+
+        return resp.redirect(302, external_url);
+}
+
+export const getEventClickCount = async( req: Request, resp: Response) => {
+    const { trackingCode } = req.params;
+
+    const result = await pool.query(
+        `
+            SELECT
+                pe.published_event_id
+            FROM published_events pe
+            WHERE pe.tracking_code = $1
+        `,
+        [trackingCode]
+    );
+
+    console.log(`[publishedEventsController] count:code=${trackingCode} result=${JSON.stringify(result.rows[0])}`);
+    if (result.rowCount === 0) {
+        return resp.status(404).send("Link not found");
+    }
+    const publishedEventId = result.rows[0].published_event_id;
+
+    const countResult = await pool.query(
+        `
+            SELECT count(*)
+            FROM tracking_clicks t
+            WHERE t.published_event_id = $1
+        `,
+        [publishedEventId]
+    );
+
+    const count = countResult.rowCount === 0 ? 0 : countResult.rows[0].count;
+    return resp.status(200).json({count});
+}
+
+
 export const updatePublishedEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
     const platform = req.params.platform;
@@ -85,7 +153,7 @@ export const getPublishedEvent = async( req: Request, resp: Response) => {
     }
 }
 
-export const getPublishedEvents = async (req: Request, resp: Response) => {
+export const getPublishedEventPlatforms = async (req: Request, resp: Response) => {
     const { eventId } = req.params;
     const client = await pool.connect();
 
@@ -112,10 +180,14 @@ export const getPublishedEvents = async (req: Request, resp: Response) => {
         );
 
         const platformRes = await client.query(
-            `SELECT platform, status, external_url, date_published, published_url
-               FROM published_events
-               WHERE event_id = $1
-               ORDER BY platform`,
+            `SELECT
+                                    pe.*,
+                                    COUNT(tc.click_id)::int AS click_count
+                                FROM published_events pe
+                                LEFT JOIN tracking_clicks tc
+                                    ON tc.published_event_id = pe.published_event_id
+                                WHERE pe.event_id = $1
+                                GROUP BY pe.published_event_id;`,
             [eventId]
         );
 

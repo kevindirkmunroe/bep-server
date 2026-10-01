@@ -166,8 +166,8 @@ export const createUserEvent= async( req: Request, resp: Response) => {
 
         for (const platform of SUPPORTED_PLATFORMS) {
             await client.query(`
-                        INSERT INTO published_events (event_id, platform, status)
-                        VALUES ($1, $2, 'not_started');
+                        INSERT INTO published_events (event_id, platform, status, tracking_code)
+                        VALUES ($1, $2, 'not_started', nextval('tracking_code_seq'));
                 `,
                 [event_id, platform]
             );
@@ -377,7 +377,8 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                                     'status', p.status,
                                     'external_url', p.external_url,
                                     'published_url', p.published_url,
-                                    'date_published', p.date_published
+                                    'date_published', p.date_published,
+                                    'tracking_code', p.tracking_code
                                 )
                         ) FILTER (WHERE p.platform IS NOT NULL),
                     '[]'
