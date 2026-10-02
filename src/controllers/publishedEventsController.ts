@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import pool from '../db';
+import {decode} from "../tracking";
 
 
 export const updatePublishedEventStatus = async( req: Request, resp: Response) => {
@@ -25,6 +26,14 @@ export const updatePublishedEventStatus = async( req: Request, resp: Response) =
 
 export const getEventURLFromTrackingCode = async( req: Request, resp: Response) => {
         const { trackingCode } = req.params;
+        if(!trackingCode){
+            return resp.status(400).send("Missing tracking code");
+        }
+        const r = decode(trackingCode as string);
+        if(!r){
+            return resp.status(400).send(`Could not decode: ${r}`);
+        }
+        const tcDecoded = r[0];
 
         const result = await pool.query(
             `
@@ -34,10 +43,9 @@ export const getEventURLFromTrackingCode = async( req: Request, resp: Response) 
             FROM published_events pe
             WHERE pe.tracking_code = $1
         `,
-            [trackingCode]
+            [tcDecoded]
         );
 
-        console.log(`[publishedEventsController] code=${trackingCode} result=${JSON.stringify(result.rows[0])}`);
         if (result.rowCount === 0) {
             return resp.status(404).send("Link not found");
         }
