@@ -21,6 +21,73 @@ export const getInviteRequests = async (req: Request, resp: Response) => {
     }
 }
 
+export const getPlatformClicks = async (req: Request, resp: Response) => {
+    try {
+        const result = await pool.query(`
+            select json_agg(t) from 
+              ( SELECT
+                pe.platform,
+                COUNT(tc.published_event_id)::int AS click_count,
+                ROUND(
+                    COUNT(tc.published_event_id) * 100.0 /
+                    NULLIF(SUM(COUNT(tc.published_event_id)) OVER (), 0),
+                    1
+                ) AS click_percentage
+            FROM published_events pe
+            LEFT JOIN tracking_clicks tc
+                ON tc.published_event_id = pe.published_event_id
+            GROUP BY pe.platform
+            ORDER BY click_count DESC) t;
+        `);
+
+        resp.json(result.rows[0].json_agg);
+
+    } catch (error) {
+
+        console.error(error);
+        resp.status(500).json({
+            error: "Unable to retrieve clicks"
+        });
+    }
+}
+
+export const getPlatformClicksByUser = async (req: Request, resp: Response) => {
+    const {user_id} = req.params;
+    try {
+        const result = await pool.query(`
+            select json_agg(t) from 
+              (SELECT
+                    pe.platform,
+                    COUNT(tc.published_event_id)::int AS click_count,
+                    ROUND(
+                        COUNT(tc.published_event_id) * 100.0 /
+                        NULLIF(
+                            SUM(COUNT(tc.published_event_id)) OVER (),
+                            0
+                        ),
+                        1
+                    ) AS click_percentage
+                FROM published_events pe
+                JOIN events e
+                    ON e.event_id = pe.event_id
+                LEFT JOIN tracking_clicks tc
+                    ON tc.published_event_id = pe.published_event_id
+                WHERE e.user_id = $1
+                GROUP BY pe.platform
+                ORDER BY click_count DESC) t;
+        `, [user_id]);
+
+        resp.json(result.rows[0].json_agg);
+
+    } catch (error) {
+
+        console.error(error);
+        resp.status(500).json({
+            error: "Unable to retrieve clicks"
+        });
+    }
+}
+
 export const getProOrders = async (req: Request, resp: Response) => {
     try {
         const result = await pool.query(`
