@@ -38,6 +38,24 @@ const ALL_PLATFORM_CLICKS = `
             ORDER BY click_count DESC) t;
 `;
 
+const ALL_PLATFORM_CLICKS_30_DAYS = `
+            select json_agg(t) from 
+              ( SELECT
+                pe.platform,
+                COUNT(tc.published_event_id)::int AS click_count,
+                ROUND(
+                    COUNT(tc.published_event_id) * 100.0 /
+                    NULLIF(SUM(COUNT(tc.published_event_id)) OVER (), 0),
+                    1
+                ) AS click_percentage
+            FROM published_events pe
+            LEFT JOIN tracking_clicks tc
+                ON tc.published_event_id = pe.published_event_id
+                    AND tc.clicked_at >= NOW() - INTERVAL '30 days'
+            GROUP BY pe.platform
+            ORDER BY click_count DESC) t;
+`;
+
 const PLATFORM_CLICKS_BY_USER = `
             select json_agg(t) from 
               (SELECT
@@ -61,15 +79,42 @@ const PLATFORM_CLICKS_BY_USER = `
                 ORDER BY click_count DESC) t;
         
 `;
+
+
+const PLATFORM_CLICKS_BY_USER_30_DAYS = `
+            select json_agg(t) from 
+              (SELECT
+                    pe.platform,
+                    COUNT(tc.published_event_id)::int AS click_count,
+                    ROUND(
+                        COUNT(tc.published_event_id) * 100.0 /
+                        NULLIF(
+                            SUM(COUNT(tc.published_event_id)) OVER (),
+                            0
+                        ),
+                        1
+                    ) AS click_percentage
+                FROM published_events pe
+                JOIN events e
+                    ON e.event_id = pe.event_id
+                LEFT JOIN tracking_clicks tc
+                    ON tc.published_event_id = pe.published_event_id
+                        AND tc.clicked_at >= NOW() - INTERVAL '30 days'
+               WHERE e.user_id = $1
+                GROUP BY pe.platform
+                ORDER BY click_count DESC) t;
+        
+`;
 export const getPlatformClicks = async (req: Request, resp: Response) => {
     const { user_id } = req.params;
+    const { window } = req.query;
 
     try {
         let result = null;
         if(user_id){
-            result = await pool.query(PLATFORM_CLICKS_BY_USER, [user_id]);
+            result = await pool.query(window? PLATFORM_CLICKS_BY_USER_30_DAYS : PLATFORM_CLICKS_BY_USER, [user_id]);
         }else{
-            result = await pool.query(ALL_PLATFORM_CLICKS);
+            result = await pool.query(window ? ALL_PLATFORM_CLICKS: ALL_PLATFORM_CLICKS_30_DAYS);
         }
 
         resp.json(result.rows[0].json_agg);
