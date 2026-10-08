@@ -72,7 +72,7 @@ import {
 import {
     fulfillProOrder,
     getInviteRequests,
-    getPlatformClicks, getPlatformClicksByUser,
+    getPlatformClicks,
     getProOrders,
     updateFulfillmentLog
 } from "./controllers/adminController";
@@ -190,8 +190,8 @@ if(process.env.APP_MODE_BETA === 'true'){
     app.post("/payments/stripe/verify-payment", requireAuth, verifyPayment);
 }
 
+app.get("/admin/analytics/platform-clicks/:user_id", requireAuth, getPlatformClicks);
 app.get("/admin/analytics/platform-clicks", requireAuth, getPlatformClicks);
-app.get("/admin/analytics/platform-clicks-user", requireAuth, getPlatformClicksByUser);
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 app.get("/admin/pro-orders", requireAuth, getProOrders);
 app.put("/admin/fulfill-order", requireAuth, fulfillProOrder);

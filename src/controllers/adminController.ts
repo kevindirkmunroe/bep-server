@@ -21,9 +21,7 @@ export const getInviteRequests = async (req: Request, resp: Response) => {
     }
 }
 
-export const getPlatformClicks = async (req: Request, resp: Response) => {
-    try {
-        const result = await pool.query(`
+const ALL_PLATFORM_CLICKS = `
             select json_agg(t) from 
               ( SELECT
                 pe.platform,
@@ -38,23 +36,9 @@ export const getPlatformClicks = async (req: Request, resp: Response) => {
                 ON tc.published_event_id = pe.published_event_id
             GROUP BY pe.platform
             ORDER BY click_count DESC) t;
-        `);
+`;
 
-        resp.json(result.rows[0].json_agg);
-
-    } catch (error) {
-
-        console.error(error);
-        resp.status(500).json({
-            error: "Unable to retrieve clicks"
-        });
-    }
-}
-
-export const getPlatformClicksByUser = async (req: Request, resp: Response) => {
-    const {user_id} = req.params;
-    try {
-        const result = await pool.query(`
+const PLATFORM_CLICKS_BY_USER = `
             select json_agg(t) from 
               (SELECT
                     pe.platform,
@@ -75,7 +59,18 @@ export const getPlatformClicksByUser = async (req: Request, resp: Response) => {
                 WHERE e.user_id = $1
                 GROUP BY pe.platform
                 ORDER BY click_count DESC) t;
-        `, [user_id]);
+        
+`;
+export const getPlatformClicks = async (req: Request, resp: Response) => {
+    const { user_id } = req.params;
+
+    try {
+        let result = null;
+        if(user_id){
+            result = await pool.query(PLATFORM_CLICKS_BY_USER, [user_id]);
+        }else{
+            result = await pool.query(ALL_PLATFORM_CLICKS);
+        }
 
         resp.json(result.rows[0].json_agg);
 
