@@ -128,6 +128,65 @@ export const getPlatformClicks = async (req: Request, resp: Response) => {
     }
 }
 
+const EVENT_CLICKS_BY_USER = `
+    SELECT
+        e.event_id,
+        e.title,
+        e.start_datetime::date AS event_date,
+        COUNT(c.click_id) AS clicks
+    FROM events e
+      JOIN published_events pe on e.event_id = pe.event_id
+    LEFT JOIN tracking_clicks c
+       ON c.published_event_id = pe.published_event_id
+    WHERE e.user_id = $1
+    GROUP BY
+        e.event_id,
+        e.title,
+        e.start_datetime
+    ORDER BY clicks DESC
+    LIMIT 10;
+`;
+
+const ALL_EVENT_CLICKS = `
+    SELECT
+        e.event_id,
+        e.title,
+        e.start_datetime::date AS event_date,
+        COUNT(c.click_id) AS clicks
+    FROM events e
+      JOIN published_events pe on e.event_id = pe.event_id
+    LEFT JOIN tracking_clicks c
+        ON c.published_event_id = pe.published_event_id
+    GROUP BY
+        e.event_id,
+        e.title,
+        e.start_datetime
+    ORDER BY clicks DESC
+    LIMIT 10;
+`;
+
+export const getEventClickTotals = async (req: Request, resp: Response) => {
+    const { user_id } = req.params;
+
+    try {
+        let result = null;
+        if(user_id){
+            result = await pool.query(EVENT_CLICKS_BY_USER, [user_id]);
+        }else{
+            result = await pool.query(ALL_EVENT_CLICKS);
+        }
+
+        resp.json(result.rows);
+
+    } catch (error) {
+
+        console.error(error);
+        resp.status(500).json({
+            error: "Unable to retrieve clicks"
+        });
+    }
+}
+
 export const getProOrders = async (req: Request, resp: Response) => {
     try {
         const result = await pool.query(`

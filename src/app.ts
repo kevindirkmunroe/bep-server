@@ -74,7 +74,8 @@ import {
     getInviteRequests,
     getPlatformClicks,
     getProOrders,
-    updateFulfillmentLog
+    updateFulfillmentLog,
+    getEventClickTotals
 } from "./controllers/adminController";
 
 const app = express();
@@ -192,6 +193,8 @@ if(process.env.APP_MODE_BETA === 'true'){
 
 app.get("/admin/analytics/platform-clicks/:user_id", requireAuth, getPlatformClicks);
 app.get("/admin/analytics/platform-clicks", requireAuth, getPlatformClicks);
+app.get("/admin/analytics/event-clicks/:user_id", requireAuth, getEventClickTotals);
+app.get("/admin/analytics/event-clicks", requireAuth, getEventClickTotals);
 app.get("/admin/invite-requests", requireAuth, getInviteRequests);
 app.get("/admin/pro-orders", requireAuth, getProOrders);
 app.put("/admin/fulfill-order", requireAuth, fulfillProOrder);
