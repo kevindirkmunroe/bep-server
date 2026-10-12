@@ -144,7 +144,7 @@ const EVENT_CLICKS_BY_USER = `
         e.title,
         e.start_datetime
     ORDER BY clicks DESC
-    LIMIT 10;
+    LIMIT 5;
 `;
 
 const ALL_EVENT_CLICKS = `
@@ -162,7 +162,7 @@ const ALL_EVENT_CLICKS = `
         e.title,
         e.start_datetime
     ORDER BY clicks DESC
-    LIMIT 10;
+    LIMIT 5;
 `;
 
 export const getEventClickTotals = async (req: Request, resp: Response) => {
