@@ -6,7 +6,7 @@ export class ResendMailer implements Mailer {
     private resend: Resend;
 
     constructor() {
-        console.log(`👉🏻Configuring Resend as mailer in PRODUCTION environment...`);
+        console.log(`👉🏻 Configuring Resend as mailer in PRODUCTION environment...`);
         this.resend = new Resend(process.env.RESEND_API_KEY);
         console.log(`...OK`);
 

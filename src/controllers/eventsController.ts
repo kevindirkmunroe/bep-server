@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import pool from '../db';
 
-const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay"];
+const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay", "eastbaymagazine"];
 
 const {
     AWS_REGION,

@@ -4,7 +4,7 @@ import { Mailer } from "./Mailer";
 export class MailpitMailer implements Mailer {
 
     constructor(){
-        console.log(`👉🏻Configuring MailpitMailer as mailer in DEV environment.`);
+        console.log(`👉🏻 Configuring MailpitMailer as mailer in DEV environment.`);
     }
 
     private transporter = nodemailer.createTransport({
