@@ -215,7 +215,8 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 website,
                 organization,
                 phone, 
-                zip
+                zip,
+                deleted_at
             )
             SELECT
                 gen_random_uuid() as event_id,
@@ -236,7 +237,8 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 website,
                 organization,
                 phone,
-                zip
+                zip, 
+                deleted_at
             FROM events
             WHERE event_id = $1
             RETURNING event_id;
@@ -322,13 +324,10 @@ export const deleteUserEvent= async( req: Request, resp: Response) => {
 
     try{
         await client.query(`
-                DELETE FROM events where event_id = $1
-        `,
-            [eventId]
-        );
-        await client.query(`
-                DELETE FROM published_events where event_id = $1
-        `,
+                    UPDATE events
+                    SET deleted_at = NOW()
+                    WHERE event_id = $1
+                      AND deleted_at IS NULL;`,
             [eventId]
         );
 
@@ -396,6 +395,7 @@ export const getUserEvents = async( req: Request, resp: Response) => {
                            ON o.event_id = e.event_id
 
         WHERE e.user_id = $1
+          AND e.deleted_at IS NULL
 
         GROUP BY
             e.event_id,
