@@ -223,7 +223,7 @@ export const cloneUserEvent = async( req: Request, resp: Response) => {
                 user_id,
                 title || ' (Copy)',
                 description,
-                (CURRENT_DATE + 1),
+                (CURRENT_DATE + INTERVAL '1 day'),
                 location_name,
                 address,
                 price,
