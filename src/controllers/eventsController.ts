@@ -2,8 +2,14 @@ import { Request, Response } from "express";
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
+import { ApifyClient } from 'apify-client';
+
+const apifyClient = new ApifyClient({
+    token: process.env.APIFY_TOKEN,
+});
 
 import pool from '../db';
+import {scrapeFacebookEvent} from "../facebookScraper";
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay",
     "eastbaymagazine", "eastbaytimes", "patch", "metrosiliconvalley"];
@@ -39,31 +45,7 @@ export const importUserEventFromFacebook = async( req: Request, resp: Response) 
             return resp.status(400).json({ error: "facebookEventUrl is required" });
         }
 
-        const apifyToken = process.env.APIFY_TOKEN;
-
-        const apifyRes = await fetch(
-            `https://api.apify.com/v2/acts/crawlerbros~facebook-events-scraper/run-sync-get-dataset-items?token=${apifyToken}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    eventUrls: [facebookEventUrl]
-                })
-            }
-        );
-
-        if (!apifyRes.ok) {
-            const text = await apifyRes.text();
-            return resp.status(502).json({
-                error: "Facebook import failed",
-                detail: text
-            });
-        }
-
-        const items = await apifyRes.json();
-        const fbEvent = items?.[0];
+        const fbEvent = await scrapeFacebookEvent(facebookEventUrl);
 
         if (!fbEvent) {
             return resp.status(404).json({
@@ -72,14 +54,13 @@ export const importUserEventFromFacebook = async( req: Request, resp: Response) 
         }
 
         const importedEvent = {
-            title: fbEvent.name || fbEvent.title || "",
+            title: fbEvent.name || "",
             description: fbEvent.description || "",
-            start_datetime: fbEvent.startDate || fbEvent.start_time || "",
-            end_datetime: fbEvent.endDate || fbEvent.end_time || "",
-            location_name: fbEvent.location?.name || fbEvent.place?.name || "",
-            address: fbEvent.location?.address || fbEvent.address || "",
+            start_datetime: fbEvent.startTime || "",
+            location_name: fbEvent.location?.name || "",
+            address: fbEvent.address || "",
             website: facebookEventUrl,
-            image: fbEvent.image || fbEvent.coverPhoto || ""
+            image: fbEvent.imageUrl || ""
         };
 
     resp.json({ data: importedEvent, raw: fbEvent });
