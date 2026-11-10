@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { generatePassword } from "password-generator";
-import {SessionData} from "express-session";
 
 import pool from '../db';
 import { MailProvider } from "../mailers/MailProvider";

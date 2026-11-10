@@ -1,5 +1,8 @@
 import express from "express";
 const session = require("express-session");
+import googleSheetsRouter from "./routes/googleSheets";
+
+import router from "./routes/googleSheets";
 
 import cors from "cors";
 import {
@@ -203,5 +206,5 @@ app.put("/admin/update-fulfillment-log", requireAuth, updateFulfillmentLog);
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);
 
-
+app.use("/api/google", googleSheetsRouter);
 export default app;

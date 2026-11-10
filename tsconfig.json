@@ -31,16 +31,15 @@
         "sourceMap": true,
 
         /* Allow running with ts-node easily */
-        "types": ["node"],
+        "types": ["node", "express", "express-session"],
 
         "ignoreDeprecations": "6.0",
       "jsx": "react"
     },
 
     "include": [
-        "src",
-        "types",
         "src/**/*",
+        "types/**/*",
         "ingestion/**/*",
         "scripts/**/*"
     ],
@@ -49,5 +48,9 @@
     "exclude": [
         "node_modules",
         "dist"
-    ]
+    ],
+
+    "ts-node": {
+        "files": true
+    }
 }

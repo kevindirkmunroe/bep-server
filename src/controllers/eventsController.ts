@@ -9,7 +9,7 @@ const apifyClient = new ApifyClient({
 });
 
 import pool from '../db';
-import {scrapeFacebookEvent} from "../facebookScraper";
+import {scrapeFacebookEvent} from "../data/facebookScraper";
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay",
     "eastbaymagazine", "eastbaytimes", "patch", "metrosiliconvalley"];
