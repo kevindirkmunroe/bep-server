@@ -2,8 +2,6 @@ import express from "express";
 const session = require("express-session");
 import googleSheetsRouter from "./routes/googleSheets";
 
-import router from "./routes/googleSheets";
-
 import cors from "cors";
 import {
     cloneUserEvent,
@@ -68,6 +66,7 @@ import pool from "./db";
 
 import {
     createOrder,
+    createOrdersBulk,
     getOrderForEvent,
     updateOrder
 } from "./controllers/ordersController";
@@ -80,6 +79,7 @@ import {
     updateFulfillmentLog,
     getEventClickTotals
 } from "./controllers/adminController";
+import {createUserEventsBulk} from "./controllers/bulkEventsController";
 
 const app = express();
 
@@ -167,6 +167,7 @@ app.get("/users", requireAuth, getUserByEmail);
 app.get("/users/:userId", requireAuth, getUser);
 
 app.post("/users/:userId/events", requireAuth, createUserEvent);
+app.post("/users/:userId/events/bulk", requireAuth, createUserEventsBulk);
 app.get("/users/:userId/events", requireAuth, getUserEvents);
 app.post("/events/:eventId/clone", requireAuth, cloneUserEvent);
 app.put("/events/:eventId", requireAuth, updateUserEvent);
@@ -183,7 +184,8 @@ app.get("/r/:trackingCode", getEventURLFromTrackingCode);
 app.get("/r/:trackingCode/count", getEventClickCount);
 
 
-app.post("/orders/create", requireAuth, createOrder);
+app.post("/orders", requireAuth, createOrder);
+app.post("/orders/bulk", requireAuth, createOrdersBulk);
 app.put("/orders/:orderId", requireAuth, updateOrder);
 app.get("/orders/:eventId", requireAuth, getOrderForEvent);
 if(process.env.APP_MODE_BETA === 'true'){

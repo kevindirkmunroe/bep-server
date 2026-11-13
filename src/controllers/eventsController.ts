@@ -10,6 +10,7 @@ const apifyClient = new ApifyClient({
 
 import pool from '../db';
 import {scrapeFacebookEvent} from "../data/facebookScraper";
+import {PoolClient} from "pg";
 
 const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay",
     "eastbaymagazine", "eastbaytimes", "patch", "metrosiliconvalley"];
@@ -123,37 +124,70 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
     }
 }
 
-export const createUserEvent= async( req: Request, resp: Response) => {
+async function findDuplicateEvent(
+    client: PoolClient,
+    event: any
+): Promise<string | null> {
 
-    const userId = req.params.userId;
-    const { title, description, start_datetime, end_datetime, location_name, address, price, image, tags, name, email, zip, category, imported_from, organization, website, phone} = req.body;
-    const client = await pool.connect();
+    const result = await client.query(
+        `SELECT event_id
+         FROM events
+         WHERE title = $1
+           AND start_datetime = $2
+         LIMIT 1`,
+        [event.title, event.start_datetime]
+    );
 
-    // Transaction creates event and published event...
-    await client.query('BEGIN');
+    return result.rows.length > 0
+        ? result.rows[0].event_id
+        : null;
+}
+
+export const createOneEvent = async (userId: string, event: any, client: PoolClient) : Promise<string> => {
+
+    const {title, description, start_datetime, end_datetime, location_name, address,
+        price, image, tags, name, email, zip, category, imported_from,
+        organization, website, phone} = event;
+
+    const dupEventId = await findDuplicateEvent(client, event);
+    if(dupEventId){
+        throw new Error(`Duplicate Event found: ${dupEventId}`);
+    }
 
     const ts = new Date();
-
-    try {
-        const result = await client.query(`
+    const result = await client.query(`
                     INSERT INTO events (user_id, title, description, start_datetime, end_datetime, location_name, address, price,
                                        image, tags, created_at, updated_at, name, email, zip, category, imported_from, organization, website, phone)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                     RETURNING event_id
             `,
-            [userId, title, description, start_datetime, end_datetime, location_name, address, price, image, tags, ts, ts, name, email, zip, category, imported_from, organization, website, phone]
-        );
+        [userId, title, description, start_datetime, end_datetime, location_name, address, price, image, tags, ts, ts, name, email, zip, category, imported_from, organization, website, phone]
+    );
 
-        const event_id = result.rows[0].event_id;
+    const event_id = result.rows[0].event_id;
 
-        for (const platform of SUPPORTED_PLATFORMS) {
-            await client.query(`
+    for (const platform of SUPPORTED_PLATFORMS) {
+        await client.query(`
                         INSERT INTO published_events (event_id, platform, status, tracking_code)
                         VALUES ($1, $2, 'not_started', nextval('tracking_code_seq'));
                 `,
-                [event_id, platform]
-            );
-        }
+            [event_id, platform]
+        );
+    }
+
+    return event_id;
+}
+
+export const createUserEvent= async( req: Request, resp: Response) => {
+
+    const userId = req.params.userId;
+    const client = await pool.connect();
+
+    // Transaction creates event and published event...
+    await client.query('BEGIN');
+    try {
+
+        const event_id = await createOneEvent(userId as string, req.body, client);
 
         await client.query("COMMIT");
         resp.status(201).json({
@@ -163,7 +197,7 @@ export const createUserEvent= async( req: Request, resp: Response) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error(err);
-        resp.status(500).json({ error: "Failed to create event"});
+        resp.status(500).json({ error: `Failed to create event: ${err}`});
     }finally {
         client.release();   // ✅ ALWAYS release
     }

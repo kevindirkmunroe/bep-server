@@ -27,6 +27,48 @@ export const createOrder= async( req: Request, resp: Response) => {
     }
 }
 
+export const createOrdersBulk= async( req: Request, resp: Response) => {
+    const {promote_selection, events } = req.body;
+
+    if(!events || events.length === 0){
+        return resp.status(500).json({error: "No events found"});
+    }
+
+    const client = await pool.connect();
+    await client.query('BEGIN');
+
+    const bulkResults = [];
+    try {
+        for(const e of events){
+            const result = await client.query(
+                `
+            INSERT INTO promote_orders (
+                promote_selection,
+                event_id,
+                created_at
+            )
+            VALUES ($1, $2, NOW())
+            RETURNING *
+            `,
+                [
+                    promote_selection,
+                    e.event_id
+                ]
+            );
+
+            bulkResults.push(result.rows[0]);
+        }
+
+        return resp.status(201).json(bulkResults);
+    }catch(err){
+        await client.query('ROLLBACK');
+        console.error(err);
+        return resp.status(500).json({ error: `Failed to create Bulk Order: ${err}` });
+    }finally{
+        client.release();   // ✅ ALWAYS release
+    }
+}
+
 export const updateOrder= async( req: Request, resp: Response) => {
     const orderId = req.params.orderId;
     const {promote_selection, payment_completed_at, order_fulfilled_at } = req.body;
