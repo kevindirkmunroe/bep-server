@@ -45,9 +45,10 @@ export const createOrdersBulk= async( req: Request, resp: Response) => {
             INSERT INTO promote_orders (
                 promote_selection,
                 event_id,
-                created_at
+                created_at,
+                payment_completed_at
             )
-            VALUES ($1, $2, NOW())
+            VALUES ($1, $2, NOW(), NOW())
             RETURNING *
             `,
                 [
@@ -58,6 +59,8 @@ export const createOrdersBulk= async( req: Request, resp: Response) => {
 
             bulkResults.push(result.rows[0]);
         }
+        // Complete Transaction
+        await client.query('COMMIT');
 
         return resp.status(201).json(bulkResults);
     }catch(err){
