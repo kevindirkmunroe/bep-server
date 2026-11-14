@@ -132,13 +132,15 @@ googleSheetsRouter.get("/status", (req, res) => {
     });
 });
 
-interface GoogleSheetsResponse {
+export interface GoogleSheetsResponse {
     spreadsheetId: string;
-    eventsTab: string;
-    eventYear: number;
     mappings: string[][];
     defaults: string[][];
-    events: string[][];
+    eventSheets: {
+        eventsTab: string;
+        eventYear: number;
+        events: string[][];
+    }[];
 }
 
 function extractSpreadsheetId(sheetUrl: string): string {
@@ -161,6 +163,7 @@ function extractSpreadsheetId(sheetUrl: string): string {
 
     return match[1];
 }
+
 
 googleSheetsRouter.get("/read", async (req: Request, res: Response) => {
     const token = (req.session as SessionData).googleSheetsToken;
@@ -204,7 +207,7 @@ googleSheetsRouter.get("/read", async (req: Request, res: Response) => {
         });
 
         //
-        // Get year from Events tab...
+        // 1. Retrieve all tab names
         //
         const metadata = await sheets.spreadsheets.get({
             spreadsheetId,
@@ -215,43 +218,84 @@ googleSheetsRouter.get("/read", async (req: Request, res: Response) => {
             .map(sheet => sheet.properties?.title)
             .filter((title): title is string => Boolean(title));
 
-        const eventsTab = titles.find(title =>
-            /^(?:Events[\s_-]+)?\d{4}$/i.test(title)
-        );
+        //
+        // 2. Find all Events tabs for current year or newer
+        //
+        const currentYear = new Date().getFullYear();
 
-        if (!eventsTab) {
+        const eventTabs = titles
+            .map(title => {
+                const match = title.match(
+                    /^(?:Events[\s_-]+)?(\d{4})$/i
+                );
+
+                return match
+                    ? {
+                        title,
+                        year: Number(match[1])
+                    }
+                    : null;
+            })
+            .filter(
+                (tab): tab is { title: string; year: number } =>
+                    tab !== null && tab.year >= currentYear
+            )
+            .sort((a, b) =>
+                a.year - b.year || a.title.localeCompare(b.title)
+            );
+
+        if (eventTabs.length === 0) {
             res.status(400).json({
-                error: "No Events tab with a four-digit year found"
+                error: `No Events tabs found for ${currentYear} or newer`
             });
             return;
         }
 
-        const yearMatch = eventsTab.match(/(\d{4})$/);
-        const eventYear = Number(yearMatch![1]);
-
+        //
+        // 3. Build ranges for Mappings, Defaults, and all Events tabs
+        //
         const quoteSheet = (name: string) =>
             `'${name.replace(/'/g, "''")}'`;
 
+        const ranges = [
+            "'Airhorn.Mappings'!A:Z",
+            "'Airhorn.Defaults'!A:Z",
+            ...eventTabs.map(tab =>
+                `${quoteSheet(tab.title)}!A:Z`
+            )
+        ];
+
+        //
+        // 4. Read all ranges in one API request
+        //
         const response = await sheets.spreadsheets.values.batchGet({
             spreadsheetId,
-            ranges: [
-                "'Mappings'!A:Z",
-                "'Defaults'!A:Z",
-                `${quoteSheet(eventsTab)}!A:Z`
-            ],
+            ranges,
             valueRenderOption: "FORMATTED_VALUE"
         });
 
-        const [mappings, defaults, events] =
-        response.data.valueRanges ?? [];
+        const valueRanges = response.data.valueRanges ?? [];
 
+        const mappings = valueRanges[0]?.values ?? [];
+        const defaults = valueRanges[1]?.values ?? [];
+
+        //
+        // 5. Build eventSheets, preserving each tab's year
+        //
+        const eventSheets = eventTabs.map((tab, index) => ({
+            eventsTab: tab.title,
+            eventYear: tab.year,
+            events: valueRanges[index + 2]?.values ?? []
+        }));
+
+        //
+        // 6. Return all event sheets
+        //
         const result: GoogleSheetsResponse = {
             spreadsheetId,
-            eventsTab,
-            eventYear,
-            mappings: mappings?.values ?? [],
-            defaults: defaults?.values ?? [],
-            events: events?.values ?? []
+            mappings,
+            defaults,
+            eventSheets
         };
 
         res.json(result);
@@ -283,9 +327,10 @@ googleSheetsRouter.get("/read", async (req: Request, res: Response) => {
         }
 
         res.status(500).json({
-            error: "Unable to read Google Sheet. Check sheet contains Default | Mappings | <Year> Tabs."
+            error: "Unable to read Google Sheet. Check sheet contains Defaults, Mappings, and Events <Year> tabs."
         });
     }
 });
+
 
 export default googleSheetsRouter;

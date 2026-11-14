@@ -111,7 +111,7 @@ export const createUserEventsBulk = async( req: Request, resp: Response) => {
         return;
     }
 
-    const { events } = req.body;
+    const { source, events } = req.body;
     if(!events || events.length === 0){
         resp.status(500).json({
             error: "Zero events to save"
@@ -133,11 +133,11 @@ export const createUserEventsBulk = async( req: Request, resp: Response) => {
     try{
         // Create Bulk Insert record...
         const result = await client.query(`
-                    INSERT INTO bulk_insert (created_at, created_by)
-                    VALUES (NOW(), $1)
+                    INSERT INTO bulk_insert (source, created_at, created_by)
+                    VALUES ($1, NOW(), $2)
                     RETURNING bulk_insert_id
             `,
-            [userId]
+            [source, userId]
         );
 
         if(!result){

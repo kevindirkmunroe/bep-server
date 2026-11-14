@@ -170,10 +170,11 @@ app.post("/users/register", createUser);
 app.get("/users", requireAuth, getUserByEmail);
 app.get("/users/:userId", requireAuth, getUser);
 
-app.post("/users/:userId/events", requireAuth, createUserEvent);
 app.post("/users/:userId/events/bulk", requireAuth, createUserEventsBulk);
 app.get("/users/:userId/events/bulk", requireAuth, getUserEventsBulkList);
 app.delete("/users/:userId/events/bulk/:bulkInsertId", requireAuth, deleteEventsBulkList);
+
+app.post("/users/:userId/events", requireAuth, createUserEvent);
 app.get("/users/:userId/events", requireAuth, getUserEvents);
 app.post("/events/:eventId/clone", requireAuth, cloneUserEvent);
 app.put("/events/:eventId", requireAuth, updateUserEvent);

@@ -126,7 +126,8 @@ export const importUserEventFromEventbrite = async (req: Request, resp: Response
 
 async function findDuplicateEvent(
     client: PoolClient,
-    event: any
+    event: any,
+    userId: string
 ): Promise<string | null> {
 
     const result = await client.query(
@@ -134,8 +135,10 @@ async function findDuplicateEvent(
          FROM events
          WHERE title = $1
            AND start_datetime = $2
+           AND user_id = $3
+           AND deleted_at is NULL
          LIMIT 1`,
-        [event.title, event.start_datetime]
+        [event.title, event.start_datetime, userId]
     );
 
     return result.rows.length > 0
@@ -149,7 +152,7 @@ export const createOneEvent = async (userId: string, event: any, client: PoolCli
         price, image, tags, name, email, zip, category, imported_from,
         organization, website, phone} = event;
 
-    const dupEventId = await findDuplicateEvent(client, event);
+    const dupEventId = await findDuplicateEvent(client, event, userId);
     if(dupEventId){
         throw new Error(`Duplicate Event found: ${dupEventId}`);
     }
