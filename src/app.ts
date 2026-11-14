@@ -79,7 +79,11 @@ import {
     updateFulfillmentLog,
     getEventClickTotals
 } from "./controllers/adminController";
-import {createUserEventsBulk} from "./controllers/bulkEventsController";
+import {
+    createUserEventsBulk,
+    deleteEventsBulkList,
+    getUserEventsBulkList
+} from "./controllers/bulkEventsController";
 
 const app = express();
 
@@ -168,6 +172,8 @@ app.get("/users/:userId", requireAuth, getUser);
 
 app.post("/users/:userId/events", requireAuth, createUserEvent);
 app.post("/users/:userId/events/bulk", requireAuth, createUserEventsBulk);
+app.get("/users/:userId/events/bulk", requireAuth, getUserEventsBulkList);
+app.delete("/users/:userId/events/bulk/:bulkInsertId", requireAuth, deleteEventsBulkList);
 app.get("/users/:userId/events", requireAuth, getUserEvents);
 app.post("/events/:eventId/clone", requireAuth, cloneUserEvent);
 app.put("/events/:eventId", requireAuth, updateUserEvent);
