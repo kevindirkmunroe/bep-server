@@ -320,6 +320,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 };
 
+
 export const validateUser = async (req: Request, res: Response) => {
     const { email, username, password, invite_code } = req.query;
 

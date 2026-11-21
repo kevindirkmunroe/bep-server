@@ -84,6 +84,16 @@ import {
     deleteEventsBulkList,
     getUserEventsBulkList
 } from "./controllers/bulkEventsController";
+import {checkpointer} from "./workflows/pro/graph";
+import {
+    handleProUserAction,
+    pollProTasks,
+    startProEventRuns
+} from "./controllers/proWorkflowController";
+import {
+    getFavorites,
+    saveFavorites
+} from "./controllers/favoritesController";
 
 const app = express();
 
@@ -126,6 +136,9 @@ app.use(
         }
     })
 );
+
+// Initialize PostgresSaver checkpoints on startup
+checkpointer.setup();
 
 app.get("/users/me", checkUserLoggedIn);
 app.post("/users/logout", logoutUser);
@@ -174,6 +187,9 @@ app.post("/users/:userId/events/bulk", requireAuth, createUserEventsBulk);
 app.get("/users/:userId/events/bulk", requireAuth, getUserEventsBulkList);
 app.delete("/users/:userId/events/bulk/:bulkInsertId", requireAuth, deleteEventsBulkList);
 
+app.get("/users/:userId/favorites", requireAuth, getFavorites);
+app.put("/users/:userId/favorites", requireAuth, saveFavorites);
+
 app.post("/users/:userId/events", requireAuth, createUserEvent);
 app.get("/users/:userId/events", requireAuth, getUserEvents);
 app.post("/events/:eventId/clone", requireAuth, cloneUserEvent);
@@ -214,6 +230,11 @@ app.put("/admin/update-fulfillment-log", requireAuth, updateFulfillmentLog);
 
 app.get("/mapRegion", mapZipToRegion);
 app.get("/mapCity", mapZipToCity);
+
+app.post("/pro/runs/start", startProEventRuns);
+app.get("/pro/browser-tasks/poll", pollProTasks);
+app.post("/pro/browser-tasks/:id/action", handleProUserAction);
+
 
 app.use("/api/google", googleSheetsRouter);
 export default app;

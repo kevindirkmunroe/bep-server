@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
         /* Language and environment */
-        "target": "ES2020",
-        "module": "CommonJS",
+        "target": "ES2023",
+        "module": "nodenext",
         "lib": [
             "ES2020",
             "dom"
@@ -13,7 +13,7 @@
         "outDir": "dist",
 
         /* Module resolution */
-        "moduleResolution": "node",
+        "moduleResolution": "nodenext",
         "esModuleInterop": true,
         "resolveJsonModule": true,
 
