@@ -195,6 +195,7 @@ export const getProOrders = async (req: Request, resp: Response) => {
                      left join events e on e.event_id = o.event_id
                      left join users u on u.user_id = e.user_id
             WHERE o.promote_selection  = 'PRO'
+            AND e.deleted_at is NULL
             ORDER BY o.created_at ASC
         `);
         resp.json(result.rows);

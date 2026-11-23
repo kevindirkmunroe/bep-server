@@ -2,6 +2,7 @@ import {Request, Response} from "express";
 import pool from '../db';
 import { graph } from "../workflows/pro/graph";
 import {Command} from "@langchain/langgraph";
+import {SUPPORTED_PLATFORMS} from "./eventsController";
 
 // 1. Triggered by Scheduler/EventRunManager
 export const startProEventRuns = async (req: Request, resp: Response) => {
@@ -12,7 +13,7 @@ export const startProEventRuns = async (req: Request, resp: Response) => {
     // Initialize event_runs and target platform items
         await client.query(`INSERT INTO event_runs (id, event_id, status) VALUES ($1, $2, 'running')`, [runId, eventId]);
         // Example: Populate 3 platform queue targets
-        const platforms = ["eventbrite", "meetup", "luma"];
+        const platforms = SUPPORTED_PLATFORMS;
         for (let i = 0; i < platforms.length; i++) {
             await client.query(
                 `INSERT INTO event_run_platform_tasks (event_run_id, event_id, platform_name, execution_order)
@@ -22,7 +23,7 @@ export const startProEventRuns = async (req: Request, resp: Response) => {
         }
         // Kick off workflow (stops at first interrupt)
         graph.invoke({ eventId, runId }, { configurable: { thread_id: runId } });
-        resp.json({ success: true, runId });
+        resp.json({ success: true, runId, taskCount: platforms.length });
 }
 
 // 2. Polled by React App: Atomically claim oldest pending task using FOR UPDATE SKIP LOCKED

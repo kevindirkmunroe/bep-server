@@ -7,7 +7,7 @@ import pool from '../db';
 import {scrapeFacebookEvent} from "../data/facebookScraper";
 import {PoolClient} from "pg";
 
-const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay",
+export const SUPPORTED_PLATFORMS = ["funcheapsf", "visitoakland", "sfstation", "indybay", "dothebay",
     "eastbaymagazine", "eastbaytimes", "patch", "metrosiliconvalley"];
 
 const {

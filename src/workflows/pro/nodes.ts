@@ -4,14 +4,14 @@ import {EventRunStateType, TaskInterruptValue, TaskResumePayload} from "./state"
 import pool from "../../db";
 
 const gemini = new ChatGoogleGenerativeAI({
-    model: "gemini-1.5-flash",
+    model: "gemini-3.6-flash",
     temperature: 0.1,
 });
 
 export async function fetchEvent(state: EventRunStateType) {
     const client = await pool.connect();
 
-    const result = await client.query<any>(`SELECT *FROM events WHERE id = $1`, [state.eventId]);
+    const result = await client.query<any>(`SELECT *FROM events WHERE event_id = $1`, [state.eventId]);
     if (!result || result.rowCount === 0) throw new Error(`Event not found: ${state.eventId}`);
     const event = result.rows[0];
 
@@ -23,7 +23,7 @@ export async function fetchEvent(state: EventRunStateType) {
         [state.runId]
     );
 
-    const platforms = (rPlatforms ? rPlatforms.rows[0] : []);
+    const platforms = (rPlatforms ? rPlatforms.rows : []);
 
     return {
         eventData: event,
@@ -32,44 +32,52 @@ export async function fetchEvent(state: EventRunStateType) {
 }
 
 export async function validatePayment(state: EventRunStateType) {
+    console.log(`[GRAPH.validatePayment] start...`);
     const client = await pool.connect();
-    const result = await client.query<any>(`SELECT is_pro FROM events WHERE id = $1`, [state.eventId]);
+    const result = await client.query<any>(`SELECT * FROM promote_orders WHERE event_id = $1 AND payment_completed_at IS NOT NULL`, [state.eventId]);
     const row = result.rows[0];
-    if (!row?.is_pro) {
+    if (!row) {
         throw new Error(`Unauthorized: Event ${state.eventId} is not verified as a PRO event.`);
     }
     return { paymentVerified: true };
 }
 
 export function selectNextPlatform(state: EventRunStateType) {
+    console.log(`[GRAPH.selectNextPlatform] start...`);
     if (state.isAborted) {
         return { currentPlatformIndex: null };
     }
     const nextIndex = state.platforms.findIndex((p) => p.status === "pending");
+    console.log(`[GRAPH.selectNextPlatform] nextIndex=${nextIndex}`);
     return {
         currentPlatformIndex: nextIndex !== -1 ? nextIndex : null,
     };
 }
 
 export async function adaptContentForPlatform(state: EventRunStateType) {
+    console.log(`[GRAPH.adaptContentForPlatform] stateId=${state.eventId}`);
     const idx = state.currentPlatformIndex!;
     const target = state.platforms[idx];
     const client = await pool.connect();
 
     // Adapt canonical schema to specific platform constraints (length, formatting, tags)
-    const prompt = `Adapt the following event for platform "${target.platformName}".
-Strictly return a JSON object with keys: { "title", "description", "tags", "locationString", "ticketInstructions" }.
-Source Event: ${JSON.stringify(state.eventData)}`;
+//     const prompt = `Adapt the following event for platform "${target.platformName}".
+// Strictly return a JSON object with keys: { "title", "description", "tags", "locationString", "ticketInstructions" }.
+// Source Event: ${JSON.stringify(state.eventData)}`;
+//
+//     const response = await gemini.invoke(prompt);
+//     console.log(`[GRAPH.adaptContentForPlatform] post AI response: ${JSON.stringify(response.content)}`);
+//     let adapted = state.eventData;
+//     try {
+//         const raw = String(response.content).replace(/```json/g, "").replace(/```/g, "").trim();
+//         adapted = JSON.parse(raw);
+//     } catch {
+//         adapted = state.eventData;
+//     }
 
-    const response = await gemini.invoke(prompt);
-    let adapted = state.eventData;
-    try {
-        const raw = String(response.content).replace(/```json/g, "").replace(/```/g, "").trim();
-        adapted = JSON.parse(raw);
-    } catch {
-        adapted = state.eventData;
-    }
 
+    // TODO: for now skip adaptation, use canonical data
+    const adapted = state.eventData;
     const updatedPlatforms = [...state.platforms];
     updatedPlatforms[idx] = {
         ...target,
@@ -91,6 +99,7 @@ export async function executeBrowserTaskAndInterrupt(state: EventRunStateType) {
     const target = state.platforms[idx];
     const client = await pool.connect();
 
+    console.log(`[GRAPH.executeBrowserTaskAndInterrupt] inserting into browser_task...`);
     // 1. Insert row into browser_task
     const result = await client.query<{ id: string }>(
         `INSERT INTO browser_task (
@@ -105,6 +114,9 @@ export async function executeBrowserTaskAndInterrupt(state: EventRunStateType) {
         ]
     );
     const createdTask = result.rows[0];
+    console.log(`[GRAPH.executeBrowserTaskAndInterrupt] inserted into browser_task: ${JSON.stringify(createdTask)}`);
+
+    console.log(`[GRAPH.executeBrowserTaskAndInterrupt] calling INTERRUPT`);
 
     // 2. Suspend graph execution. Yields payload to callers.
     const resume = interrupt<TaskInterruptValue, TaskResumePayload>({
@@ -112,6 +124,9 @@ export async function executeBrowserTaskAndInterrupt(state: EventRunStateType) {
         platform: target.platformName,
         eventRunPlatformTaskId: target.eventRunPlatformTaskId,
     });
+
+    console.log(`[GRAPH.executeBrowserTaskAndInterrupt] post INTERRUPT, resume.action=${resume.action}`);
+
 
     const updatedPlatforms = [...state.platforms];
 
