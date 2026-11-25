@@ -102,8 +102,9 @@ export const getEventClickCount = async( req: Request, resp: Response) => {
 export const updatePublishedEvent = async( req: Request, resp: Response) => {
     const eventId = req.params.eventId;
     const platform = req.params.platform;
+    const { external_url, status, payload, publishedUrl } = req.body;
 
-    const { external_url, status, payload } = req.body;
+    console.log(`[publishedEventController] status=${status} publishedUrl=${publishedUrl}`);
     try{
         const result = await pool.query(
             `
@@ -116,11 +117,12 @@ export const updatePublishedEvent = async( req: Request, resp: Response) => {
                 ELSE date_published
               END,
               updated_at = NOW(),
-              payload = COALESCE($5, payload)
-            WHERE event_id = $3
+              payload = COALESCE($5, payload),
+              published_url = COALESCE($6, published_url)
+              WHERE event_id = $3
             AND platform = $4;
         `,
-            [status, external_url, eventId, platform, payload]
+            [status, external_url, eventId, platform, payload, publishedUrl]
         )
         return resp.json({
             success: true
