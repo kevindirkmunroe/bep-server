@@ -79,7 +79,6 @@ export const getEventClickCount = async( req: Request, resp: Response) => {
         [trackingCode]
     );
 
-    console.log(`[publishedEventsController] count:code=${trackingCode} result=${JSON.stringify(result.rows[0])}`);
     if (result.rowCount === 0) {
         return resp.status(404).send("Link not found");
     }
@@ -104,7 +103,6 @@ export const updatePublishedEvent = async( req: Request, resp: Response) => {
     const platform = req.params.platform;
     const { external_url, status, payload, publishedUrl } = req.body;
 
-    console.log(`[publishedEventController] status=${status} publishedUrl=${publishedUrl}`);
     try{
         const result = await pool.query(
             `

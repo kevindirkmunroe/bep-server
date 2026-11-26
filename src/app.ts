@@ -99,6 +99,7 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:4150",
+    "http://localhost:4151",
     "http://localhost:5173",
     "https://localbuzz-events-feed.onrender.com",
     process.env.FRONTEND_URL,
@@ -146,19 +147,25 @@ app.post("/users/logout", logoutUser);
 // Endpoint for localbuzz-events-feed
 app.get("/events/public", async (req, res) => {
     const result = await pool.query(`
-    SELECT
-      event_id,
-      title,
-      description,
-      to_char(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
-      location_name,
-      address,
-      category,
-      price,
-      website
-    FROM events
-    WHERE start_datetime >= NOW()
-    ORDER BY start_datetime DESC
+        SELECT *
+        FROM (
+                 SELECT DISTINCT ON (title, location_name, start_datetime)
+                     event_id,
+                     title,
+                     description,
+                     to_char(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
+                     location_name,
+                     address,
+                     category,
+                     price,
+                     image,
+                     website
+                 FROM events
+                 WHERE start_datetime >= NOW()
+                   AND deleted_at IS NULL
+                 ORDER BY title, location_name, start_datetime
+             ) AS unique_events
+        ORDER BY start_datetime DESC;
   `);
 
     res.json({ data: result.rows });
