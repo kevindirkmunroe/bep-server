@@ -149,21 +149,35 @@ app.get("/events/public", async (req, res) => {
     const result = await pool.query(`
         SELECT *
         FROM (
-                 SELECT DISTINCT ON (title, location_name, start_datetime)
-                     event_id,
-                     title,
-                     description,
-                     to_char(start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
-                     location_name,
-                     address,
-                     category,
-                     price,
-                     image,
-                     website
-                 FROM events
-                 WHERE start_datetime >= NOW()
-                   AND deleted_at IS NULL
-                 ORDER BY title, location_name, start_datetime
+                 SELECT DISTINCT ON (
+                     e.title,
+                     e.location_name,
+                     e.start_datetime
+                     )
+                     e.event_id,
+                     e.title,
+                     e.description,
+                     to_char(e.start_datetime, 'YYYY-MM-DD HH24:MI:SS') AS start_datetime,
+                     e.location_name,
+                     e.address,
+                     e.category,
+                     e.price,
+                     e.image,
+                     e.website
+                 FROM events e
+                 WHERE e.start_datetime >= NOW()
+                   AND e.deleted_at IS NULL
+                   AND EXISTS (
+                     SELECT 1
+                     FROM promote_orders o
+                     WHERE o.event_id = e.event_id
+                   AND o.payment_completed_at IS NOT NULL
+                     )
+                 ORDER BY
+                     e.title,
+                     e.location_name,
+                     e.start_datetime,
+                     e.event_id
              ) AS unique_events
         ORDER BY start_datetime DESC;
   `);
