@@ -147,6 +147,26 @@ const EVENT_CLICKS_BY_USER = `
     LIMIT 10;
 `;
 
+const EVENT_CLICKS_BY_USER_30_DAYS = `
+    SELECT
+        e.event_id,
+        e.title,
+        e.start_datetime::date AS event_date,
+        COUNT(c.click_id) AS clicks
+    FROM events e
+      JOIN published_events pe on e.event_id = pe.event_id
+    LEFT JOIN tracking_clicks c
+       ON c.published_event_id = pe.published_event_id
+           AND c.clicked_at >= NOW() - INTERVAL '30 days'
+    WHERE e.user_id = $1
+    GROUP BY
+        e.event_id,
+        e.title,
+        e.start_datetime
+    ORDER BY clicks DESC
+    LIMIT 10;
+`;
+
 const ALL_EVENT_CLICKS = `
     SELECT
         e.event_id,
@@ -165,15 +185,35 @@ const ALL_EVENT_CLICKS = `
     LIMIT 10;
 `;
 
+const ALL_EVENT_CLICKS_30_DAYS = `
+    SELECT
+        e.event_id,
+        e.title,
+        e.start_datetime::date AS event_date,
+        COUNT(c.click_id) AS clicks
+    FROM events e
+      JOIN published_events pe on e.event_id = pe.event_id
+    LEFT JOIN tracking_clicks c
+        ON c.published_event_id = pe.published_event_id
+            AND c.clicked_at >= NOW() - INTERVAL '30 days'
+    GROUP BY
+        e.event_id,
+        e.title,
+        e.start_datetime
+    ORDER BY clicks DESC
+    LIMIT 10;
+`;
+
 export const getEventClickTotals = async (req: Request, resp: Response) => {
     const { user_id } = req.params;
+    const { window } = req.query;
 
     try {
         let result = null;
         if(user_id){
-            result = await pool.query(EVENT_CLICKS_BY_USER, [user_id]);
+            result = await pool.query(window? EVENT_CLICKS_BY_USER_30_DAYS : EVENT_CLICKS_BY_USER, [user_id]);
         }else{
-            result = await pool.query(ALL_EVENT_CLICKS);
+            result = await pool.query(window ? ALL_EVENT_CLICKS_30_DAYS : ALL_EVENT_CLICKS);
         }
 
         resp.json(result.rows);

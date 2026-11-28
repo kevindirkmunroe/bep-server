@@ -30,6 +30,7 @@ export const getEventURLFromTrackingCode = async( req: Request, resp: Response) 
             return resp.status(400).send("Missing tracking code");
         }
         const r = decode(trackingCode as string);
+
         if(!r){
             return resp.status(400).send(`Could not decode: ${r}`);
         }
@@ -47,7 +48,7 @@ export const getEventURLFromTrackingCode = async( req: Request, resp: Response) 
         );
 
         if (result.rowCount === 0) {
-            return resp.status(404).send("Link not found");
+            return resp.status(404).send(`[getEventURLFromTrackingCode] published_event for tracking_code: ${trackingCode} decoded: ${tcDecoded} not found`);
         }
 
         const {
@@ -80,7 +81,7 @@ export const getEventClickCount = async( req: Request, resp: Response) => {
     );
 
     if (result.rowCount === 0) {
-        return resp.status(404).send("Link not found");
+        return resp.status(404).send(`[getEventClickCount] published_event for tracking_code ${trackingCode} not found`);
     }
     const publishedEventId = result.rows[0].published_event_id;
 

@@ -164,8 +164,12 @@ app.get("/events/public", async (req, res) => {
                      e.category,
                      e.price,
                      e.image,
-                     e.website
+                     e.website,
+                     pe.tracking_code AS tracking_code
                  FROM events e
+                LEFT JOIN published_events pe
+                 ON pe.event_id = e.event_id
+                     AND pe.platform = 'airhorn_calendar'
                  WHERE e.start_datetime >= NOW()
                    AND e.deleted_at IS NULL
                    AND EXISTS (

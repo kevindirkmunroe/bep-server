@@ -172,6 +172,13 @@ export const createOneEvent = async (userId: string, event: any, client: PoolCli
             [event_id, platform]
         );
     }
+    // Special case: Airhorn Calendar is automatically published.
+    await client.query(`
+                        INSERT INTO published_events (event_id, platform, status, tracking_code)
+                        VALUES ($1, 'airhorn_calendar', 'submitted', nextval('tracking_code_seq'));
+                `,
+        [event_id]
+    );
 
     return event_id;
 }
